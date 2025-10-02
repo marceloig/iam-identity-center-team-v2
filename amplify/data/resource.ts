@@ -72,8 +72,8 @@ const schema = a.schema({
       ]),
     })
     .secondaryIndexes((index) => [
-      index('email').sortKeys(['status']).queryField('requestByEmailAndStatus'),
-      index('approverId').sortKeys(['status']).queryField('requestByApproverAndStatus'),
+      index('email').sortKeys(['status']).queryField('requestByEmailAndStatus').name('byEmailAndStatus'),
+      index('approverId').sortKeys(['status']).queryField('requestByApproverAndStatus').name('byApproverAndStatus'),
     ])
     .authorization((allow) => [
       allow.group('Auditors').to(['read']),
