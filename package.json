@@ -10,6 +10,9 @@
     "eject": "react-scripts eject",
     "dev": "vite"
   },
+  "engine": {
+    "node": ">=20.0.0"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
