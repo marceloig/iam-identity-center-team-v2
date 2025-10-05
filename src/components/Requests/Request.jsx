@@ -25,7 +25,9 @@ import {
   fetchPolicy,
 } from "../Shared/RequestService";
 import { useHistory } from "react-router-dom";
-import { API, graphqlOperation } from "aws-amplify";
+import { generateClient } from 'aws-amplify/api';
+
+const client = generateClient();
 import { onPublishPolicy } from "../../graphql/subscriptions";
 import params from "../../parameters.json";
 
@@ -125,9 +127,9 @@ function Request(props) {
   };
 
   function publishEvent() {
-    const subscription = API.graphql(graphqlOperation(onPublishPolicy)).subscribe({
+    const subscription = client.graphql({ query: onPublishPolicy }).subscribe({
       next: (result) => {
-        const policy = result.value.data.onPublishPolicy.policy;
+        const policy = result.data.onPublishPolicy.policy;
         if (policy?.length > 0) {
           setItem(policy);
           setAccounts(concatenateAccounts(policy));

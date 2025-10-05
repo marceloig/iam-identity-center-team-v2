@@ -19,7 +19,9 @@ import {
   ColumnLayout,
 } from "@awsui/components-react";
 import { useCollection } from "@awsui/collection-hooks";
-import { API, graphqlOperation } from "aws-amplify";
+import { generateClient } from 'aws-amplify/api';
+
+const client = generateClient();
 import {
   onUpdateRequests,
   onCreateRequests,
@@ -260,7 +262,7 @@ function Approvals(props) {
   }
 
   function approveEvent() {
-    API.graphql(graphqlOperation(onUpdateRequests)).subscribe({
+    client.graphql({ query: onUpdateRequests }).subscribe({
       next: () => {
         views();
       },
@@ -269,7 +271,7 @@ function Approvals(props) {
   }
 
   function createEvent() {
-    API.graphql(graphqlOperation(onCreateRequests)).subscribe({
+    client.graphql({ query: onCreateRequests }).subscribe({
       next: ({ value }) => {
         views();
       },

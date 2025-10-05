@@ -3,9 +3,11 @@
 // http://aws.amazon.com/agreement or other written agreement between Customer and either
 // Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
 import React, { useEffect, useState } from "react";
-import { Amplify, Auth, Hub } from "aws-amplify";
+import { Amplify } from "aws-amplify";
+import { Hub } from "aws-amplify/utils";
+import { signInWithRedirect, getCurrentUser, fetchAuthSession } from "aws-amplify/auth";
 import { Spin, Layout } from "antd";
-import awsconfig from "./aws-exports";
+import outputs from "../amplify_outputs.json";
 import Nav from "./components/Navigation/Nav";
 import home from "./media/Home.svg";
 import "./index.css";
@@ -13,7 +15,7 @@ import { Button } from "@awsui/components-react";
 
 const { Header, Content } = Layout;
 
-Amplify.configure(awsconfig);
+Amplify.configure(outputs);
 
 function Home(props) {
   return (
@@ -24,7 +26,7 @@ function Home(props) {
           <Button
             className="homebutton"
             variant="primary"
-            onClick={() => Auth.federatedSignIn()}
+            onClick={() => signInWithRedirect()}
           >
             Federated Sign In
           </Button>
@@ -69,21 +71,26 @@ function App() {
     setData();
   }, []);
 
-  function setData() {
-    getUser().then((userData) => {
+  async function setData() {
+    try {
+      const userData = await getUser();
       setUser(userData);
-      const payload = userData.signInUserSession.idToken.payload;
+      const session = await fetchAuthSession();
+      const payload = session.tokens.idToken.payload;
       setcognitoGroups(payload["cognito:groups"]);
       setUserId(payload.userId);
       setGroupIds((payload.groupIds).split(','));
       setGroups((payload.groups).split(','));
       setLoading(false);
-    });
+    } catch (error) {
+      console.log("Error setting data:", error);
+      setLoading(false);
+    }
   }
 
   async function getUser() {
     try {
-      const userData = await Auth.currentAuthenticatedUser();
+      const userData = await getCurrentUser();
       return userData;
     } catch {
       setLoading(false);

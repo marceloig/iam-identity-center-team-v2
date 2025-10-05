@@ -23,8 +23,8 @@ import Eligible from "../Admin/Eligible";
 import Active from "../Sessions/Active";
 import Audit from "../Sessions/Audit";
 import { Amplify } from "aws-amplify";
-import awsExports from "../../aws-exports";
-Amplify.configure(awsExports);
+import outputs from "../../../amplify_outputs.json";
+Amplify.configure(outputs);
 
 function Nav(props) {
   const [notifications, setNotifications] = useState([]);

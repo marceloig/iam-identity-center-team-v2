@@ -15,7 +15,7 @@ import {
 } from "@awsui/components-react";
 import { useCollection } from "@awsui/collection-hooks";
 import { getSessionLogs, fetchLogs, getSession, deleteSessionLogs } from "../Shared/RequestService";
-import { API, graphqlOperation } from "aws-amplify";
+import { generateClient } from "aws-amplify/api";
 import {
   onUpdateSessions,
 } from "../../graphql/subscriptions";
@@ -225,15 +225,17 @@ function Logs(props) {
   }
 
   function updateEvent() {
-    API.graphql(
-      graphqlOperation(onUpdateSessions, {
+    const client = generateClient();
+    client.graphql({
+      query: onUpdateSessions,
+      variables: {
         filter: {
           id: { eq: props.item.id },
         },
-      })
-    ).subscribe({
-      next: ({ value }) => {
-        getLogs(value.data.onUpdateSessions.queryId);
+      }
+    }).subscribe({
+      next: ({ data }) => {
+        getLogs(data.onUpdateSessions.queryId);
       },
       error: (error) => console.warn(error),
     });

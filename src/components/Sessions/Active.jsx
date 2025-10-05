@@ -22,7 +22,8 @@ import {
 import { useCollection } from "@awsui/collection-hooks";
 import { useHistory } from "react-router-dom";
 import { sessions, updateStatus, getSetting} from "../Shared/RequestService";
-import { API, graphqlOperation } from "aws-amplify";
+import { generateClient } from "aws-amplify/api";
+const client = generateClient();
 import { onUpdateRequests } from "../../graphql/subscriptions";
 import Status from "../Shared/Status";
 import Details from "../Shared/Details";
@@ -314,10 +315,12 @@ function Active(props) {
   }
 
   function approveEvent() {
-    API.graphql(graphqlOperation(onUpdateRequests)).subscribe({
-      next: ({ value }) => {
+    client.graphql({
+      query: onUpdateRequests
+    }).subscribe({
+      next: ({ data }) => {
         // eslint-disable-next-line default-case
-        switch (value.data.onUpdateRequests.status) {
+        switch (data.onUpdateRequests.status) {
           case "in progress":
           case "ended":
           case "revoked":
