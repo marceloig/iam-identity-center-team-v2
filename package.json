@@ -20,7 +20,9 @@
     "constructs": "^10.4.2",
     "esbuild": "^0.25.10",
     "tsx": "^4.20.6",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "@svgr/webpack": "^7.0.0",
+    "json-loader": "^0.5.7"
   },
   "dependencies": {
     "aws-amplify": "^6.15.7",
