@@ -8,7 +8,7 @@ const functionDir = path.dirname(fileURLToPath(import.meta.url));
 
 export const teamPreTokenGenerationHandler = defineFunction(
     (scope) =>
-        new Function(scope, "team06dbb7fcPreTokenGeneration", {
+        new Function(scope, "teamPreTokenGeneration", {
             handler: "src/index.handler",
             runtime: Runtime.PYTHON_3_13, // or any other python version
             timeout: Duration.seconds(20), //  default is 3 seconds
