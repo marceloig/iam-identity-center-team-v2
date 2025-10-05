@@ -1,8 +1,9 @@
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
+import { execSync } from "node:child_process";
 import { defineFunction } from "@aws-amplify/backend";
-import { Duration } from "aws-cdk-lib";
 import { Code, Function, Runtime } from "aws-cdk-lib/aws-lambda";
+import { DockerImage, Duration } from "aws-cdk-lib";
 
 const functionDir = path.dirname(fileURLToPath(import.meta.url));
 
@@ -14,11 +15,16 @@ export const teamgetUsers = defineFunction(
             timeout: Duration.seconds(20), //  default is 3 seconds
             code: Code.fromAsset(functionDir, {
                 bundling: {
-                    image: Runtime.PYTHON_3_13.bundlingImage,
-                    command: [
-                        'bash', '-c',
-                        'pip install -r requirements.txt -t /asset-output && cp -au . /asset-output'
-                    ],
+                    image: DockerImage.fromRegistry("dummy"), // replace with desired image from AWS ECR Public Gallery
+                    local: {
+                        tryBundle(outputDir: string) {
+                            execSync(
+                                `python3 -m pip install -r ${path.join(functionDir, "requirements.txt")} -t ${path.join(outputDir)} --platform manylinux2014_x86_64 --only-binary=:all:`
+                            );
+                            execSync(`cp -r ${functionDir}/* ${path.join(outputDir)}`);
+                            return true;
+                        },
+                    },
                 },
             }),
         }),
