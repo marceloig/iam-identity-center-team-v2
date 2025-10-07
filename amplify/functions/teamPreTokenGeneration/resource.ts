@@ -13,6 +13,11 @@ export const teamPreTokenGenerationHandler = defineFunction(
       handler: "src/index.handler",
       runtime: Runtime.PYTHON_3_13, // or any other python version
       timeout: Duration.seconds(20), //  default is 3 seconds
+      environment: {
+        TEAM_ADMIN_GROUP: "TeamAdmins",
+        TEAM_AUDITOR_GROUP: "TeamMembers",
+        SETTINGS_TABLE_NAME: "replace-with-your-settings-table-name",
+      },
       code: Code.fromAsset(functionDir, {
         bundling: {
           image: DockerImage.fromRegistry("dummy"), // replace with desired image from AWS ECR Public Gallery

@@ -1,0 +1,14 @@
+import { Stack, CfnOutput } from 'aws-cdk-lib';
+import * as sns from 'aws-cdk-lib/aws-sns';
+
+export function createSnsNotificationTopic(stack: Stack, env: string) {
+  const topic = new sns.Topic(stack, 'snsNotificationTopic', {
+    topicName: `TeamNotifications-${env}`,
+  });
+
+  stack.exportValue(topic.topicArn, {
+    name: 'NotificationTopicArn'
+  });
+
+  return topic;
+}
