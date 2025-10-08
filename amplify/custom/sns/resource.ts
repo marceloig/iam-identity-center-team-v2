@@ -1,4 +1,4 @@
-import { Stack, CfnOutput } from 'aws-cdk-lib';
+import { Stack } from 'aws-cdk-lib';
 import * as sns from 'aws-cdk-lib/aws-sns';
 
 export function createSnsNotificationTopic(stack: Stack, env: string) {

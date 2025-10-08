@@ -20,7 +20,6 @@ import { teamPublishOUs } from './functions/teamPublishOUs/resource';
 import { teamqueryLogs } from './functions/teamqueryLogs/resource';
 import { teamRouter } from './functions/teamRouter/resource';
 import { teamStatus } from './functions/teamStatus/resource';
-import { createAppsyncCloudwatchLogRole } from './custom/appsyncCloudwatchLogRole/resource';
 import { createCloudTrailLake } from './custom/cloudtrailLake/resource';
 import { createSnsNotificationTopic } from './custom/sns/resource';
 import { createStepFunctions } from './custom/stepfunctions/resource';
@@ -173,16 +172,16 @@ teamRouterLambda.addToRolePolicy(teamRouterPolicyStatement)
 
 // Get the environment name
 const env = backend.stack.node.tryGetContext('env') || 'dev';
+const customResourceStack = backend.createStack('CustomResources');
 
 // Create custom resources from CloudFormation conversions
-const appsyncRole = createAppsyncCloudwatchLogRole(backend.stack, env);
-const cloudTrailLake = createCloudTrailLake(backend.stack, 'read');
-const snsTopic = createSnsNotificationTopic(backend.stack, env);
+createCloudTrailLake(customResourceStack, 'read');
+createSnsNotificationTopic(customResourceStack, env);
 
 // Create Step Functions with Lambda ARNs
-const stepFunctions = createStepFunctions(
-  backend.stack, 
-  env, 
+createStepFunctions(
+  customResourceStack,
+  env,
   backend.teamStatus.resources.lambda.functionArn,
   backend.teamNotifications.resources.lambda.functionArn
 );

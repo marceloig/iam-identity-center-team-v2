@@ -6,11 +6,6 @@ const schema = a.schema({
     .model({
       id: a.id().required(),
       email: a.string(),
-      approver_ids: a.string().array().authorization((allow) => [
-        allow.group('Auditors').to(['read']),
-        allow.owner().to(['read']),
-        allow.authenticated().to(['read', 'update']),
-      ]),
       accountId: a.string().required().authorization((allow) => [
         allow.group('Auditors').to(['read']),
         allow.owner().to(['read']),
@@ -47,6 +42,11 @@ const schema = a.schema({
         allow.group('Auditors').to(['read']),
         allow.owner().to(['read']),
         //allow.ownerDefinedIn('approver_ids').to(['update', 'read']),
+        allow.authenticated().to(['read', 'update']),
+      ]),
+      approver_ids: a.string().array().authorization((allow) => [
+        allow.group('Auditors').to(['read']),
+        allow.owner().to(['read']),
         allow.authenticated().to(['read', 'update']),
       ]),
       revoker: a.string().authorization((allow) => [

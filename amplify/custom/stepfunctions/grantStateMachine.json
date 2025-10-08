@@ -1,0 +1,165 @@
+{
+    "Comment": "Temporary Elevated Access Management - Grant state machine",
+    "StartAt": "Grant Permission",
+    "States": {
+        "DynamoDB UpdateStartTime": {
+            "Next": "Grant Error?",
+            "Parameters": {
+                "ExpressionAttributeValues": {
+                    ":time": {
+                        "S.$": "$$.State.EnteredTime"
+                    }
+                },
+                "Key": {
+                    "id": {
+                        "S.$": "$.id"
+                    }
+                },
+                "TableName.$": "$.requests_table",
+                "UpdateExpression": "SET startTime = :time"
+            },
+            "Resource": "arn:aws:states:::dynamodb:updateItem",
+            "ResultPath": "$.lastTaskResult",
+            "Type": "Task"
+        },
+        "Grant Error?": {
+            "Choices": [
+                {
+                    "IsPresent": true,
+                    "Next": "Notify Error",
+                    "Variable": "$.statusError"
+                }
+            ],
+            "Default": "Notify Started",
+            "Type": "Choice"
+        },
+        "Grant Permission": {
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "Next": "Update Request Status - in progress",
+                    "ResultPath": "$.statusError"
+                }
+            ],
+            "Next": "Update Request Status - in progress",
+            "Parameters": {
+                "InstanceArn.$": "$.instanceARN",
+                "PermissionSetArn.$": "$.roleId",
+                "PrincipalId.$": "$.userId",
+                "PrincipalType": "USER",
+                "TargetId.$": "$.accountId",
+                "TargetType": "AWS_ACCOUNT"
+            },
+            "Resource": "arn:aws:states:::aws-sdk:ssoadmin:createAccountAssignment",
+            "ResultPath": "$.grant",
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "SsoAdmin.ThrottlingException",
+                        "ThrottlingException",
+                        "ServiceUnavailable",
+                        "InternalServerError"
+                    ],
+                    "IntervalSeconds": 3,
+                    "BackoffRate": 2,
+                    "MaxAttempts": 5
+                }
+            ],
+            "Type": "Task"
+        },
+        "Notify Error": {
+            "End": true,
+            "Parameters": {
+                "FunctionName.$": "$.fn_teamnotifications_arn",
+                "Payload.$": "$"
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$.lastTaskResult",
+            "Retry": [
+                {
+                    "BackoffRate": 2,
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 6
+                }
+            ],
+            "Type": "Task"
+        },
+        "Notify Started": {
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "Next": "Wait",
+                    "ResultPath": "$.error"
+                }
+            ],
+            "Next": "Wait",
+            "Parameters": {
+                "FunctionName.$": "$.fn_teamnotifications_arn",
+                "Payload.$": "$"
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$.lastTaskResult",
+            "Retry": [
+                {
+                    "BackoffRate": 2,
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 6
+                }
+            ],
+            "Type": "Task"
+        },
+        "Revoke Permission": {
+            "End": true,
+            "Parameters": {
+                "Input.$": "$",
+                "StateMachineArn.$": "$.revoke_sm"
+            },
+            "Resource": "arn:aws:states:::states:startExecution",
+            "Type": "Task"
+        },
+        "Update Request Status - in progress": {
+            "Next": "DynamoDB UpdateStartTime",
+            "Parameters": {
+                "FunctionName.$": "$.fn_teamstatus_arn",
+                "Payload.$": "$"
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$.lastTaskResult",
+            "Retry": [
+                {
+                    "BackoffRate": 2,
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 6
+                }
+            ],
+            "Type": "Task"
+        },
+        "Wait": {
+            "Next": "Revoke Permission",
+            "SecondsPath": "$.duration",
+            "Type": "Wait"
+        }
+    }
+}

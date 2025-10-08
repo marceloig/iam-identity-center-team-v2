@@ -1,0 +1,198 @@
+{
+    "Comment": "Temporary Elevated Access Management - Revoke state machine",
+    "StartAt": "DynamoDB GetStatus",
+    "States": {
+        "DynamoDB GetStatus": {
+            "Next": "Revoked?",
+            "Parameters": {
+                "Key": {
+                    "id": {
+                        "S.$": "$.id"
+                    }
+                },
+                "TableName.$": "$.requests_table"
+            },
+            "Resource": "arn:aws:states:::dynamodb:getItem",
+            "ResultPath": "$.data",
+            "Type": "Task"
+        },
+        "DynamoDB Update EndTime": {
+            "End": true,
+            "Parameters": {
+                "ExpressionAttributeValues": {
+                    ":time": {
+                        "S.$": "$$.State.EnteredTime"
+                    }
+                },
+                "Key": {
+                    "id": {
+                        "S.$": "$.id"
+                    }
+                },
+                "TableName.$": "$.requests_table",
+                "UpdateExpression": "SET endTime = :time"
+            },
+            "Resource": "arn:aws:states:::dynamodb:updateItem",
+            "Type": "Task"
+        },
+        "Notify Error": {
+            "End": true,
+            "Parameters": {
+                "FunctionName.$": "$.fn_teamnotifications_arn",
+                "Payload.$": "$"
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$.lastTaskResult",
+            "Retry": [
+                {
+                    "BackoffRate": 2,
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 6
+                }
+            ],
+            "Type": "Task"
+        },
+        "Notify Requester Session Ended": {
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "Next": "Revoked || Ended ?",
+                    "ResultPath": "$.error"
+                }
+            ],
+            "Next": "Revoked || Ended ?",
+            "Parameters": {
+                "FunctionName.$": "$.fn_teamnotifications_arn",
+                "Payload.$": "$"
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$.lastTaskResult",
+            "Retry": [
+                {
+                    "BackoffRate": 2,
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 6
+                }
+            ],
+            "Type": "Task"
+        },
+        "Pass": {
+            "End": true,
+            "Type": "Pass"
+        },
+        "Revoke Error?": {
+            "Choices": [
+                {
+                    "IsPresent": true,
+                    "Next": "Notify Error",
+                    "Variable": "$.statusError"
+                }
+            ],
+            "Default": "DynamoDB Update EndTime",
+            "Type": "Choice"
+        },
+        "Revoke Permission": {
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "Next": "Update Request Status",
+                    "ResultPath": "$.statusError"
+                }
+            ],
+            "Next": "Notify Requester Session Ended",
+            "Parameters": {
+                "InstanceArn.$": "$.instanceARN",
+                "PermissionSetArn.$": "$.roleId",
+                "PrincipalId.$": "$.userId",
+                "PrincipalType": "USER",
+                "TargetId.$": "$.accountId",
+                "TargetType": "AWS_ACCOUNT"
+            },
+            "Resource": "arn:aws:states:::aws-sdk:ssoadmin:deleteAccountAssignment",
+            "ResultPath": "$.revoke",
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "SsoAdmin.ThrottlingException",
+                        "ThrottlingException",
+                        "ServiceUnavailable",
+                        "InternalServerError"
+                    ],
+                    "IntervalSeconds": 3,
+                    "BackoffRate": 2,
+                    "MaxAttempts": 5
+                }
+            ],
+            "Type": "Task"
+        },
+        "Revoked || Ended ?": {
+            "Choices": [
+                {
+                    "Next": "DynamoDB Update EndTime",
+                    "StringEquals": "revoked",
+                    "Variable": "$.data.Item.status.S"
+                }
+            ],
+            "Default": "Update Request Status",
+            "Type": "Choice"
+        },
+        "Revoked?": {
+            "Choices": [
+                {
+                    "And": [
+                        {
+                            "StringEquals": "revoked",
+                            "Variable": "$.data.Item.status.S "
+                        },
+                        {
+                            "IsPresent": true,
+                            "Variable": "$.result"
+                        }
+                    ],
+                    "Next": "Pass"
+                }
+            ],
+            "Default": "Revoke Permission",
+            "Type": "Choice"
+        },
+        "Update Request Status": {
+            "Next": "Revoke Error?",
+            "Parameters": {
+                "FunctionName.$": "$.fn_teamstatus_arn",
+                "Payload.$": "$"
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$.lastTaskResult",
+            "Retry": [
+                {
+                    "BackoffRate": 2,
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 6
+                }
+            ],
+            "Type": "Task"
+        }
+    }
+}

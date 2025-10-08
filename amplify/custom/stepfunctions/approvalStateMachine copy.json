@@ -1,0 +1,88 @@
+{
+    "Comment": "Temporary Elevated Access Management - Reject state machine",
+    "StartAt": "Status?",
+    "States": {
+        "Notify Requester Cancelled": {
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "Next": "Success",
+                    "ResultPath": "$.error"
+                }
+            ],
+            "Next": "Success",
+            "Parameters": {
+                "FunctionName.$": "$.fn_teamnotifications_arn",
+                "Payload.$": "$"
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$.lastTaskResult",
+            "Retry": [
+                {
+                    "BackoffRate": 2,
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 6
+                }
+            ],
+            "Type": "Task"
+        },
+        "Notify Requester Rejected": {
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "Next": "Success",
+                    "ResultPath": "$.error"
+                }
+            ],
+            "Next": "Success",
+            "Parameters": {
+                "FunctionName.$": "$.fn_teamnotifications_arn",
+                "Payload.$": "$"
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$.lastTaskResult",
+            "Retry": [
+                {
+                    "BackoffRate": 2,
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 6
+                }
+            ],
+            "Type": "Task"
+        },
+        "Status?": {
+            "Choices": [
+                {
+                    "Next": "Notify Requester Cancelled",
+                    "StringEquals": "cancelled",
+                    "Variable": "$.status"
+                },
+                {
+                    "Next": "Notify Requester Rejected",
+                    "StringEquals": "rejected",
+                    "Variable": "$.status"
+                }
+            ],
+            "Type": "Choice"
+        },
+        "Success": {
+            "Type": "Succeed"
+        }
+    }
+}

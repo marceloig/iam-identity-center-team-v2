@@ -1,0 +1,104 @@
+{
+    "Comment": "Temporary Elevated Access Management - Schedule state machine",
+    "StartAt": "Update Request Status - scheduled",
+    "States": {
+        "DynamoDB GetStatus": {
+            "Next": "Scheduled?",
+            "Parameters": {
+                "Key": {
+                    "id": {
+                        "S.$": "$.id"
+                    }
+                },
+                "TableName.$": "$.requests_table"
+            },
+            "Resource": "arn:aws:states:::dynamodb:getItem",
+            "ResultPath": "$.result",
+            "Type": "Task"
+        },
+        "Grant Permission": {
+            "End": true,
+            "Parameters": {
+                "Input.$": "$",
+                "StateMachineArn.$": "$.grant_sm"
+            },
+            "Resource": "arn:aws:states:::states:startExecution",
+            "Type": "Task"
+        },
+        "Notify Requester Scheduled": {
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "Next": "Schedule",
+                    "ResultPath": "$.error"
+                }
+            ],
+            "Next": "Schedule",
+            "Parameters": {
+                "FunctionName.$": "$.fn_teamnotifications_arn",
+                "Payload.$": "$"
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$.lastTaskResult",
+            "Retry": [
+                {
+                    "BackoffRate": 2,
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 6
+                }
+            ],
+            "Type": "Task"
+        },
+        "Pass": {
+            "End": true,
+            "Type": "Pass"
+        },
+        "Schedule": {
+            "Next": "DynamoDB GetStatus",
+            "TimestampPath": "$.startTime",
+            "Type": "Wait"
+        },
+        "Scheduled?": {
+            "Choices": [
+                {
+                    "Next": "Grant Permission",
+                    "StringEquals": "scheduled",
+                    "Variable": "$.result.Item.status.S"
+                }
+            ],
+            "Default": "Pass",
+            "Type": "Choice"
+        },
+        "Update Request Status - scheduled": {
+            "Next": "Notify Requester Scheduled",
+            "Parameters": {
+                "FunctionName.$": "$.fn_teamstatus_arn",
+                "Payload.$": "$"
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$.lastTaskResult",
+            "Retry": [
+                {
+                    "BackoffRate": 2,
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 6
+                }
+            ],
+            "Type": "Task"
+        }
+    }
+}

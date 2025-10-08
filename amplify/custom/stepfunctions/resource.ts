@@ -1,4 +1,4 @@
-import { Stack, Duration, CfnOutput } from 'aws-cdk-lib';
+import { Stack, Duration } from 'aws-cdk-lib';
 import * as stepfunctions from 'aws-cdk-lib/aws-stepfunctions';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
@@ -316,643 +316,65 @@ export function createStepFunctions(stack: Stack, env: string, teamStatusArn: st
   });
 
   // State Machines with full definitions
-  const grantStateMachine = new stepfunctions.CfnStateMachine(stack, 'GrantStateMachine', {
+  const grantStateMachine = new stepfunctions.StateMachine(stack, 'GrantStateMachine', {
     stateMachineName: `TEAM-Grant-SM-${env}`,
-    roleArn: grantRole.roleArn,
-    definition: {
-      Comment: 'Temporary Elevated Access Management - Grant state machine',
-      StartAt: 'Grant Permission',
-      States: {
-        'Grant Permission': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::aws-sdk:ssoadmin:createAccountAssignment',
-          Parameters: {
-            'InstanceArn.$': '$.instanceARN',
-            'PermissionSetArn.$': '$.roleId',
-            'PrincipalId.$': '$.userId',
-            'PrincipalType': 'USER',
-            'TargetId.$': '$.accountId',
-            'TargetType': 'AWS_ACCOUNT'
-          },
-          ResultPath: '$.grant',
-          Retry: [{
-            ErrorEquals: ['SsoAdmin.ThrottlingException', 'ThrottlingException', 'ServiceUnavailable', 'InternalServerError'],
-            IntervalSeconds: 3,
-            BackoffRate: 2,
-            MaxAttempts: 5
-          }],
-          Catch: [{
-            ErrorEquals: ['States.ALL'],
-            Next: 'Update Request Status - in progress',
-            ResultPath: '$.statusError'
-          }],
-          Next: 'Update Request Status - in progress'
-        },
-        'Update Request Status - in progress': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::lambda:invoke',
-          Parameters: {
-            'FunctionName.$': '$.fn_teamstatus_arn',
-            'Payload.$': '$'
-          },
-          ResultPath: '$.lastTaskResult',
-          Retry: [{
-            BackoffRate: 2,
-            ErrorEquals: ['Lambda.ServiceException', 'Lambda.AWSLambdaException', 'Lambda.SdkClientException', 'Lambda.TooManyRequestsException'],
-            IntervalSeconds: 2,
-            MaxAttempts: 6
-          }],
-          Next: 'DynamoDB UpdateStartTime'
-        },
-        'DynamoDB UpdateStartTime': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::dynamodb:updateItem',
-          Parameters: {
-            ExpressionAttributeValues: {
-              ':time': {
-                'S.$': '$$.State.EnteredTime'
-              }
-            },
-            Key: {
-              id: {
-                'S.$': '$.id'
-              }
-            },
-            'TableName.$': '$.requests_table',
-            UpdateExpression: 'SET startTime = :time'
-          },
-          ResultPath: '$.lastTaskResult',
-          Next: 'Grant Error?'
-        },
-        'Grant Error?': {
-          Type: 'Choice',
-          Choices: [{
-            Variable: '$.statusError',
-            IsPresent: true,
-            Next: 'Notify Error'
-          }],
-          Default: 'Notify Started'
-        },
-        'Notify Error': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::lambda:invoke',
-          Parameters: {
-            'FunctionName.$': '$.fn_teamnotifications_arn',
-            'Payload.$': '$'
-          },
-          ResultPath: '$.lastTaskResult',
-          Retry: [{
-            BackoffRate: 2,
-            ErrorEquals: ['Lambda.ServiceException', 'Lambda.AWSLambdaException', 'Lambda.SdkClientException', 'Lambda.TooManyRequestsException'],
-            IntervalSeconds: 2,
-            MaxAttempts: 6
-          }],
-          End: true
-        },
-        'Notify Started': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::lambda:invoke',
-          Parameters: {
-            'FunctionName.$': '$.fn_teamnotifications_arn',
-            'Payload.$': '$'
-          },
-          ResultPath: '$.lastTaskResult',
-          Retry: [{
-            BackoffRate: 2,
-            ErrorEquals: ['Lambda.ServiceException', 'Lambda.AWSLambdaException', 'Lambda.SdkClientException', 'Lambda.TooManyRequestsException'],
-            IntervalSeconds: 2,
-            MaxAttempts: 6
-          }],
-          Catch: [{
-            ErrorEquals: ['States.ALL'],
-            Next: 'Wait',
-            ResultPath: '$.error'
-          }],
-          Next: 'Wait'
-        },
-        'Wait': {
-          Type: 'Wait',
-          'SecondsPath': '$.duration',
-          Next: 'Revoke Permission'
-        },
-        'Revoke Permission': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::states:startExecution',
-          Parameters: {
-            'Input.$': '$',
-            'StateMachineArn.$': '$.revoke_sm'
-          },
-          End: true
-        }
-      }
+    role: grantRole,
+    definitionBody: stepfunctions.DefinitionBody.fromFile('./grantStateMachine.json'),
+    logs: {
+      destination: logGroup,
+      level: stepfunctions.LogLevel.ALL,
     },
-    loggingConfiguration: {
-      destinations: [{
-        cloudWatchLogsLogGroup: {
-          logGroupArn: logGroup.logGroupArn
-        }
-      }],
-      includeExecutionData: true,
-      level: 'ALL'
-    },
-    tracingConfiguration: {
-      enabled: true
-    }
+    tracingEnabled: true,
   });
 
-  const revokeStateMachine = new stepfunctions.CfnStateMachine(stack, 'RevokeStateMachine', {
+  const revokeStateMachine = new stepfunctions.StateMachine(stack, 'RevokeStateMachine', {
     stateMachineName: `TEAM-Revoke-SM-${env}`,
-    roleArn: revokeRole.roleArn,
-    definition: {
-      Comment: 'Temporary Elevated Access Management - Revoke state machine',
-      StartAt: 'DynamoDB GetStatus',
-      States: {
-        'DynamoDB GetStatus': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::dynamodb:getItem',
-          Parameters: {
-            Key: {
-              id: {
-                'S.$': '$.id'
-              }
-            },
-            'TableName.$': '$.requests_table'
-          },
-          ResultPath: '$.data',
-          Next: 'Revoked?'
-        },
-        'Revoked?': {
-          Type: 'Choice',
-          Choices: [{
-            And: [{
-              Variable: '$.data.Item.status.S ',
-              StringEquals: 'revoked'
-            }, {
-              Variable: '$.result',
-              IsPresent: true
-            }],
-            Next: 'Pass'
-          }],
-          Default: 'Revoke Permission'
-        },
-        'Revoke Permission': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::aws-sdk:ssoadmin:deleteAccountAssignment',
-          Parameters: {
-            'InstanceArn.$': '$.instanceARN',
-            'PermissionSetArn.$': '$.roleId',
-            'PrincipalId.$': '$.userId',
-            'PrincipalType': 'USER',
-            'TargetId.$': '$.accountId',
-            'TargetType': 'AWS_ACCOUNT'
-          },
-          ResultPath: '$.revoke',
-          Retry: [{
-            ErrorEquals: ['SsoAdmin.ThrottlingException', 'ThrottlingException', 'ServiceUnavailable', 'InternalServerError'],
-            IntervalSeconds: 3,
-            BackoffRate: 2,
-            MaxAttempts: 5
-          }],
-          Catch: [{
-            ErrorEquals: ['States.ALL'],
-            Next: 'Update Request Status',
-            ResultPath: '$.statusError'
-          }],
-          Next: 'Notify Requester Session Ended'
-        },
-        'Notify Requester Session Ended': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::lambda:invoke',
-          Parameters: {
-            'FunctionName.$': '$.fn_teamnotifications_arn',
-            'Payload.$': '$'
-          },
-          ResultPath: '$.lastTaskResult',
-          Retry: [{
-            BackoffRate: 2,
-            ErrorEquals: ['Lambda.ServiceException', 'Lambda.AWSLambdaException', 'Lambda.SdkClientException', 'Lambda.TooManyRequestsException'],
-            IntervalSeconds: 2,
-            MaxAttempts: 6
-          }],
-          Catch: [{
-            ErrorEquals: ['States.ALL'],
-            Next: 'Revoked || Ended ?',
-            ResultPath: '$.error'
-          }],
-          Next: 'Revoked || Ended ?'
-        },
-        'Revoked || Ended ?': {
-          Type: 'Choice',
-          Choices: [{
-            Variable: '$.data.Item.status.S',
-            StringEquals: 'revoked',
-            Next: 'DynamoDB Update EndTime'
-          }],
-          Default: 'Update Request Status'
-        },
-        'Update Request Status': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::lambda:invoke',
-          Parameters: {
-            'FunctionName.$': '$.fn_teamstatus_arn',
-            'Payload.$': '$'
-          },
-          ResultPath: '$.lastTaskResult',
-          Retry: [{
-            BackoffRate: 2,
-            ErrorEquals: ['Lambda.ServiceException', 'Lambda.AWSLambdaException', 'Lambda.SdkClientException', 'Lambda.TooManyRequestsException'],
-            IntervalSeconds: 2,
-            MaxAttempts: 6
-          }],
-          Next: 'Revoke Error?'
-        },
-        'Revoke Error?': {
-          Type: 'Choice',
-          Choices: [{
-            Variable: '$.statusError',
-            IsPresent: true,
-            Next: 'Notify Error'
-          }],
-          Default: 'DynamoDB Update EndTime'
-        },
-        'Notify Error': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::lambda:invoke',
-          Parameters: {
-            'FunctionName.$': '$.fn_teamnotifications_arn',
-            'Payload.$': '$'
-          },
-          ResultPath: '$.lastTaskResult',
-          Retry: [{
-            BackoffRate: 2,
-            ErrorEquals: ['Lambda.ServiceException', 'Lambda.AWSLambdaException', 'Lambda.SdkClientException', 'Lambda.TooManyRequestsException'],
-            IntervalSeconds: 2,
-            MaxAttempts: 6
-          }],
-          End: true
-        },
-        'DynamoDB Update EndTime': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::dynamodb:updateItem',
-          Parameters: {
-            ExpressionAttributeValues: {
-              ':time': {
-                'S.$': '$$.State.EnteredTime'
-              }
-            },
-            Key: {
-              id: {
-                'S.$': '$.id'
-              }
-            },
-            'TableName.$': '$.requests_table',
-            UpdateExpression: 'SET endTime = :time'
-          },
-          End: true
-        },
-        'Pass': {
-          Type: 'Pass',
-          End: true
-        }
-      }
+    role: revokeRole,
+    definitionBody: stepfunctions.DefinitionBody.fromFile('./revokeStateMachine.json'),
+    logs: {
+      destination: logGroup,
+      level: stepfunctions.LogLevel.ALL,
     },
-    loggingConfiguration: {
-      destinations: [{
-        cloudWatchLogsLogGroup: {
-          logGroupArn: logGroup.logGroupArn
-        }
-      }],
-      includeExecutionData: true,
-      level: 'ALL'
-    },
-    tracingConfiguration: {
-      enabled: true
-    }
+    tracingEnabled: true,
   });
 
-  // Add states:StartExecution permission to grant role for revoke state machine
-  grantRole.addToPolicy(new iam.PolicyStatement({
-    effect: iam.Effect.ALLOW,
-    actions: ['states:StartExecution'],
-    resources: [revokeStateMachine.attrArn]
-  }));
+  revokeStateMachine.grantStartExecution(grantRole);
 
-  // Add states:StartExecution permission to schedule role for grant state machine
-  scheduleRole.addToPolicy(new iam.PolicyStatement({
-    effect: iam.Effect.ALLOW,
-    actions: ['states:StartExecution'],
-    resources: [grantStateMachine.attrArn]
-  }));
+  grantStateMachine.grantStartExecution(scheduleRole);
 
   // Schedule State Machine
-  const scheduleStateMachine = new stepfunctions.CfnStateMachine(stack, 'ScheduleStateMachine', {
+  const scheduleStateMachine = new stepfunctions.StateMachine(stack, 'ScheduleStateMachine', {
     stateMachineName: `TEAM-Schedule-SM-${env}`,
-    roleArn: scheduleRole.roleArn,
-    definition: {
-      Comment: 'Temporary Elevated Access Management - Schedule state machine',
-      StartAt: 'Update Request Status - scheduled',
-      States: {
-        'Update Request Status - scheduled': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::lambda:invoke',
-          Parameters: {
-            'FunctionName.$': '$.fn_teamstatus_arn',
-            'Payload.$': '$'
-          },
-          ResultPath: '$.lastTaskResult',
-          Retry: [{
-            BackoffRate: 2,
-            ErrorEquals: ['Lambda.ServiceException', 'Lambda.AWSLambdaException', 'Lambda.SdkClientException', 'Lambda.TooManyRequestsException'],
-            IntervalSeconds: 2,
-            MaxAttempts: 6
-          }],
-          Next: 'Notify Requester Scheduled'
-        },
-        'Notify Requester Scheduled': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::lambda:invoke',
-          Parameters: {
-            'FunctionName.$': '$.fn_teamnotifications_arn',
-            'Payload.$': '$'
-          },
-          ResultPath: '$.lastTaskResult',
-          Retry: [{
-            BackoffRate: 2,
-            ErrorEquals: ['Lambda.ServiceException', 'Lambda.AWSLambdaException', 'Lambda.SdkClientException', 'Lambda.TooManyRequestsException'],
-            IntervalSeconds: 2,
-            MaxAttempts: 6
-          }],
-          Catch: [{
-            ErrorEquals: ['States.ALL'],
-            Next: 'Schedule',
-            ResultPath: '$.error'
-          }],
-          Next: 'Schedule'
-        },
-        'Schedule': {
-          Type: 'Wait',
-          'TimestampPath': '$.startTime',
-          Next: 'DynamoDB GetStatus'
-        },
-        'DynamoDB GetStatus': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::dynamodb:getItem',
-          Parameters: {
-            Key: {
-              id: {
-                'S.$': '$.id'
-              }
-            },
-            'TableName.$': '$.requests_table'
-          },
-          ResultPath: '$.result',
-          Next: 'Scheduled?'
-        },
-        'Scheduled?': {
-          Type: 'Choice',
-          Choices: [{
-            Variable: '$.result.Item.status.S',
-            StringEquals: 'scheduled',
-            Next: 'Grant Permission'
-          }],
-          Default: 'Pass'
-        },
-        'Grant Permission': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::states:startExecution',
-          Parameters: {
-            'Input.$': '$',
-            'StateMachineArn.$': '$.grant_sm'
-          },
-          End: true
-        },
-        'Pass': {
-          Type: 'Pass',
-          End: true
-        }
-      }
+    role: scheduleRole,
+    definitionBody: stepfunctions.DefinitionBody.fromFile('./scheduleStateMachine.json'),
+    logs: {
+      destination: logGroup,
+      level: stepfunctions.LogLevel.ALL,
     },
-    loggingConfiguration: {
-      destinations: [{
-        cloudWatchLogsLogGroup: {
-          logGroupArn: logGroup.logGroupArn
-        }
-      }],
-      includeExecutionData: true,
-      level: 'ALL'
-    },
-    tracingConfiguration: {
-      enabled: true
-    }
+    tracingEnabled: true,
   });
 
   // Approval State Machine
-  const approvalStateMachine = new stepfunctions.CfnStateMachine(stack, 'ApprovalStateMachine', {
+  const approvalStateMachine = new stepfunctions.StateMachine(stack, 'ApprovalStateMachine', {
     stateMachineName: `TEAM-Approval-SM-${env}`,
-    roleArn: approveRole.roleArn,
-    definition: {
-      Comment: 'Temporary Elevated Access Management - Approval state machine',
-      StartAt: 'Notify Approvers Pending',
-      States: {
-        'Notify Approvers Pending': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::lambda:invoke',
-          Parameters: {
-            'FunctionName.$': '$.fn_teamnotifications_arn',
-            'Payload.$': '$'
-          },
-          ResultPath: '$.lastTaskResult',
-          Catch: [{
-            ErrorEquals: ['States.ALL'],
-            Next: 'Wait',
-            ResultPath: '$.error'
-          }],
-          Next: 'Wait'
-        },
-        'Wait': {
-          Type: 'Wait',
-          'SecondsPath': '$.expire',
-          Next: 'DynamoDB GetStatus'
-        },
-        'DynamoDB GetStatus': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::dynamodb:getItem',
-          Parameters: {
-            Key: {
-              id: {
-                'S.$': '$.id'
-              }
-            },
-            'TableName.$': '$.requests_table'
-          },
-          ResultPath: '$.result',
-          Next: 'Pending?'
-        },
-        'Pending?': {
-          Type: 'Choice',
-          Choices: [{
-            Variable: '$.result.Item.status.S',
-            StringEquals: 'pending',
-            Next: 'Update Request Status'
-          }],
-          Default: 'Pass'
-        },
-        'Update Request Status': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::lambda:invoke',
-          Parameters: {
-            'FunctionName.$': '$.fn_teamstatus_arn',
-            'Payload.$': '$'
-          },
-          ResultPath: '$.Payload',
-          Retry: [{
-            BackoffRate: 2,
-            ErrorEquals: ['Lambda.ServiceException', 'Lambda.AWSLambdaException', 'Lambda.SdkClientException', 'Lambda.TooManyRequestsException'],
-            IntervalSeconds: 2,
-            MaxAttempts: 6
-          }],
-          Next: 'Notify Requester Expired'
-        },
-        'Notify Requester Expired': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::lambda:invoke',
-          Parameters: {
-            'FunctionName.$': '$.fn_teamnotifications_arn',
-            'Payload.$': '$'
-          },
-          ResultPath: '$.lastTaskResult',
-          Catch: [{
-            ErrorEquals: ['States.ALL'],
-            Next: 'Pass',
-            ResultPath: '$.error'
-          }],
-          End: true
-        },
-        'Pass': {
-          Type: 'Pass',
-          End: true
-        }
-      }
+    role: approveRole,
+    definitionBody: stepfunctions.DefinitionBody.fromFile('./approvalStateMachine.json'),
+    logs: {
+      destination: logGroup,
+      level: stepfunctions.LogLevel.ALL,
     },
-    loggingConfiguration: {
-      destinations: [{
-        cloudWatchLogsLogGroup: {
-          logGroupArn: logGroup.logGroupArn
-        }
-      }],
-      includeExecutionData: true,
-      level: 'ALL'
-    },
-    tracingConfiguration: {
-      enabled: true
-    }
+    tracingEnabled: true,
   });
 
   // Reject State Machine
-  const rejectStateMachine = new stepfunctions.CfnStateMachine(stack, 'RejectStateMachine', {
+  const rejectStateMachine = new stepfunctions.StateMachine(stack, 'RejectStateMachine', {
     stateMachineName: `TEAM-Reject-SM-${env}`,
-    roleArn: rejectRole.roleArn,
-    definition: {
-      Comment: 'Temporary Elevated Access Management - Reject state machine',
-      StartAt: 'Status?',
-      States: {
-        'Status?': {
-          Type: 'Choice',
-          Choices: [{
-            Variable: '$.status',
-            StringEquals: 'cancelled',
-            Next: 'Notify Requester Cancelled'
-          }, {
-            Variable: '$.status',
-            StringEquals: 'rejected',
-            Next: 'Notify Requester Rejected'
-          }]
-        },
-        'Notify Requester Cancelled': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::lambda:invoke',
-          Parameters: {
-            'FunctionName.$': '$.fn_teamnotifications_arn',
-            'Payload.$': '$'
-          },
-          ResultPath: '$.lastTaskResult',
-          Retry: [{
-            BackoffRate: 2,
-            ErrorEquals: ['Lambda.ServiceException', 'Lambda.AWSLambdaException', 'Lambda.SdkClientException', 'Lambda.TooManyRequestsException'],
-            IntervalSeconds: 2,
-            MaxAttempts: 6
-          }],
-          Catch: [{
-            ErrorEquals: ['States.ALL'],
-            Next: 'Success',
-            ResultPath: '$.error'
-          }],
-          Next: 'Success'
-        },
-        'Notify Requester Rejected': {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::lambda:invoke',
-          Parameters: {
-            'FunctionName.$': '$.fn_teamnotifications_arn',
-            'Payload.$': '$'
-          },
-          ResultPath: '$.lastTaskResult',
-          Retry: [{
-            BackoffRate: 2,
-            ErrorEquals: ['Lambda.ServiceException', 'Lambda.AWSLambdaException', 'Lambda.SdkClientException', 'Lambda.TooManyRequestsException'],
-            IntervalSeconds: 2,
-            MaxAttempts: 6
-          }],
-          Catch: [{
-            ErrorEquals: ['States.ALL'],
-            Next: 'Success',
-            ResultPath: '$.error'
-          }],
-          Next: 'Success'
-        },
-        'Success': {
-          Type: 'Succeed'
-        }
-      }
+    role: rejectRole,
+    definitionBody: stepfunctions.DefinitionBody.fromFile('./rejectStateMachine.json'),
+    logs: {
+      destination: logGroup,
+      level: stepfunctions.LogLevel.ALL,
     },
-    loggingConfiguration: {
-      destinations: [{
-        cloudWatchLogsLogGroup: {
-          logGroupArn: logGroup.logGroupArn
-        }
-      }],
-      includeExecutionData: true,
-      level: 'ALL'
-    },
-    tracingConfiguration: {
-      enabled: true
-    }
-  });
-
-  // Outputs
-  new CfnOutput(stack, 'GrantSMOutput', {
-    description: 'TEAM Grant StateMachine',
-    value: grantStateMachine.ref
-  });
-
-  new CfnOutput(stack, 'RevokeSMOutput', {
-    description: 'TEAM Revoke StateMachine',
-    value: revokeStateMachine.ref
-  });
-
-  new CfnOutput(stack, 'RejectSMOutput', {
-    description: 'TEAM Reject StateMachine',
-    value: rejectStateMachine.ref
-  });
-
-  new CfnOutput(stack, 'ScheduleSMOutput', {
-    description: 'TEAM Schedule StateMachine',
-    value: scheduleStateMachine.ref
-  });
-
-  new CfnOutput(stack, 'ApprovalSMOutput', {
-    description: 'TEAM Approval StateMachine',
-    value: approvalStateMachine.ref
   });
 
   return {
