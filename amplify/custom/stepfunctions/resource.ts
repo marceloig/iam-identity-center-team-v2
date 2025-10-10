@@ -1,9 +1,13 @@
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import { Stack, Duration } from 'aws-cdk-lib';
 import * as stepfunctions from 'aws-cdk-lib/aws-stepfunctions';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as kms from 'aws-cdk-lib/aws-kms';
 import { Fn } from 'aws-cdk-lib';
+
+const aslDir = path.dirname(fileURLToPath(import.meta.url));
 
 export function createStepFunctions(stack: Stack, env: string, teamStatusArn: string, teamNotificationsArn: string) {
   // KMS Key for Log Group
@@ -317,9 +321,8 @@ export function createStepFunctions(stack: Stack, env: string, teamStatusArn: st
 
   // State Machines with full definitions
   const grantStateMachine = new stepfunctions.StateMachine(stack, 'GrantStateMachine', {
-    stateMachineName: `TEAM-Grant-SM-${env}`,
     role: grantRole,
-    definitionBody: stepfunctions.DefinitionBody.fromFile('./grantStateMachine.json'),
+    definitionBody: stepfunctions.DefinitionBody.fromFile(path.join(aslDir, "grantStateMachine.json")),
     logs: {
       destination: logGroup,
       level: stepfunctions.LogLevel.ALL,
@@ -328,9 +331,8 @@ export function createStepFunctions(stack: Stack, env: string, teamStatusArn: st
   });
 
   const revokeStateMachine = new stepfunctions.StateMachine(stack, 'RevokeStateMachine', {
-    stateMachineName: `TEAM-Revoke-SM-${env}`,
     role: revokeRole,
-    definitionBody: stepfunctions.DefinitionBody.fromFile('./revokeStateMachine.json'),
+    definitionBody: stepfunctions.DefinitionBody.fromFile(path.join(aslDir, "revokeStateMachine.json")),
     logs: {
       destination: logGroup,
       level: stepfunctions.LogLevel.ALL,
@@ -344,9 +346,8 @@ export function createStepFunctions(stack: Stack, env: string, teamStatusArn: st
 
   // Schedule State Machine
   const scheduleStateMachine = new stepfunctions.StateMachine(stack, 'ScheduleStateMachine', {
-    stateMachineName: `TEAM-Schedule-SM-${env}`,
     role: scheduleRole,
-    definitionBody: stepfunctions.DefinitionBody.fromFile('./scheduleStateMachine.json'),
+    definitionBody: stepfunctions.DefinitionBody.fromFile(path.join(aslDir, "scheduleStateMachine.json")),
     logs: {
       destination: logGroup,
       level: stepfunctions.LogLevel.ALL,
@@ -356,9 +357,8 @@ export function createStepFunctions(stack: Stack, env: string, teamStatusArn: st
 
   // Approval State Machine
   const approvalStateMachine = new stepfunctions.StateMachine(stack, 'ApprovalStateMachine', {
-    stateMachineName: `TEAM-Approval-SM-${env}`,
     role: approveRole,
-    definitionBody: stepfunctions.DefinitionBody.fromFile('./approvalStateMachine.json'),
+    definitionBody: stepfunctions.DefinitionBody.fromFile(path.join(aslDir, "approvalStateMachine.json")),
     logs: {
       destination: logGroup,
       level: stepfunctions.LogLevel.ALL,
@@ -368,9 +368,8 @@ export function createStepFunctions(stack: Stack, env: string, teamStatusArn: st
 
   // Reject State Machine
   const rejectStateMachine = new stepfunctions.StateMachine(stack, 'RejectStateMachine', {
-    stateMachineName: `TEAM-Reject-SM-${env}`,
     role: rejectRole,
-    definitionBody: stepfunctions.DefinitionBody.fromFile('./rejectStateMachine.json'),
+    definitionBody: stepfunctions.DefinitionBody.fromFile(path.join(aslDir, "rejectStateMachine.json")),
     logs: {
       destination: logGroup,
       level: stepfunctions.LogLevel.ALL,
