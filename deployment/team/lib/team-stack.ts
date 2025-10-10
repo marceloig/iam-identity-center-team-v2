@@ -61,7 +61,8 @@ export class TeamStack extends cdk.Stack {
         phases:
           build:
             commands:
-              - npm install --cache .npm --prefer-offline
+              - rm -rf node_modules package-lock.json
+              - npm install
               - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
       frontend:
         phases:
