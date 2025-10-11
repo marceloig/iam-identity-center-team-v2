@@ -4,49 +4,14 @@ import { Stack, Duration } from 'aws-cdk-lib';
 import * as stepfunctions from 'aws-cdk-lib/aws-stepfunctions';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
-import * as kms from 'aws-cdk-lib/aws-kms';
 import { Fn } from 'aws-cdk-lib';
 
 const aslDir = path.dirname(fileURLToPath(import.meta.url));
 
 export function createStepFunctions(stack: Stack, env: string, teamStatusArn: string, teamNotificationsArn: string) {
-  // KMS Key for Log Group
-  const logGroupKey = new kms.Key(stack, 'LogGroupKey', {
-    description: 'TEAM Stepfunction CloudwatchLog Key',
-    enableKeyRotation: true,
-    pendingWindow: Duration.days(20),
-    policy: new iam.PolicyDocument({
-      statements: [
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          principals: [new iam.AccountRootPrincipal()],
-          actions: ['kms:*'],
-          resources: ['*']
-        }),
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          principals: [new iam.ServicePrincipal(`logs.${stack.region}.amazonaws.com`)],
-          actions: [
-            'kms:Encrypt*',
-            'kms:Decrypt*',
-            'kms:ReEncrypt*',
-            'kms:GenerateDataKey*',
-            'kms:Describe*'
-          ],
-          resources: ['*'],
-          conditions: {
-            ArnEquals: {
-              'kms:EncryptionContext:aws:logs:arn': `arn:${stack.partition}:logs:${stack.region}:${stack.account}:log-group:/aws/stepfunction/team-step-function/${env}`
-            }
-          }
-        })
-      ]
-    })
-  });
 
   // Log Group
   const logGroup = new logs.LogGroup(stack, 'TEAMStateMachineLogGroup', {
-    encryptionKey: logGroupKey,
     retention: logs.RetentionDays.TWO_WEEKS
   });
 
