@@ -46,7 +46,6 @@ export function createStepFunctions(stack: Stack, env: string, teamStatusArn: st
 
   // Log Group
   const logGroup = new logs.LogGroup(stack, 'TEAMStateMachineLogGroup', {
-    logGroupName: `/aws/stepfunction/team-step-function/${env}`,
     encryptionKey: logGroupKey,
     retention: logs.RetentionDays.TWO_WEEKS
   });
