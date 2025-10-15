@@ -1,10 +1,9 @@
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { Stack, Duration } from 'aws-cdk-lib';
+import { Stack } from 'aws-cdk-lib';
 import * as stepfunctions from 'aws-cdk-lib/aws-stepfunctions';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
-import { Fn } from 'aws-cdk-lib';
 
 const aslDir = path.dirname(fileURLToPath(import.meta.url));
 
@@ -109,7 +108,7 @@ export function createStepFunctions(stack: Stack, env: string, teamStatusArn: st
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
             actions: ['sns:Publish'],
-            resources: [Fn.importValue('NotificationTopicArn')]
+            resources: ['*']
           }),
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
@@ -183,7 +182,7 @@ export function createStepFunctions(stack: Stack, env: string, teamStatusArn: st
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
             actions: ['sns:Publish'],
-            resources: [Fn.importValue('NotificationTopicArn')]
+            resources: ['*']
           }),
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
@@ -227,7 +226,7 @@ export function createStepFunctions(stack: Stack, env: string, teamStatusArn: st
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
             actions: ['sns:Publish'],
-            resources: [Fn.importValue('NotificationTopicArn')]
+            resources: ['*']
           }),
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
@@ -271,7 +270,7 @@ export function createStepFunctions(stack: Stack, env: string, teamStatusArn: st
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
             actions: ['sns:Publish'],
-            resources: [Fn.importValue('NotificationTopicArn')]
+            resources: ['*']
           }),
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
