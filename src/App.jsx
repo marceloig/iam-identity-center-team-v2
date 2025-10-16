@@ -77,6 +77,7 @@ function App() {
       setUser(userData);
       const session = await fetchAuthSession();
       const payload = session.tokens.idToken.payload;
+      console.log("Payload:", payload);
       setcognitoGroups(payload["cognito:groups"]);
       setUserId(payload.userId);
       setGroupIds((payload.groupIds).split(','));

@@ -3,20 +3,8 @@ import * as amplify from 'aws-cdk-lib/aws-amplify';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 
-export interface TeamStackProps extends cdk.StackProps {
-  login: string;
-  cloudTrailAuditLogs: string;
-  teamAdminGroup: string;
-  teamAuditGroup: string;
-  teamTags?: string;
-  teamAccount: string;
-  customAmplifyDomain?: string;
-  customRepository?: true | false;
-  customRepositorySecretName?: string;
-}
-
 export class TeamStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props: TeamStackProps) {
+  constructor(scope: Construct, id: string, props: cdk.StackProps) {
     super(scope, id, props);
 
     // Amplify Service Role
@@ -36,8 +24,8 @@ export class TeamStack extends cdk.Stack {
     // Amplify App
     const amplifyApp = new amplify.CfnApp(this, 'AmplifyApp', {
       name: 'TEAM-IDC-APP',
-      repository: `{{resolve:secretsmanager:${props.customRepositorySecretName}:SecretString:url}}`,
-      accessToken: `{{resolve:secretsmanager:${props.customRepositorySecretName}:SecretString:AccessToken}}`,
+      repository: `{{resolve:secretsmanager:${this.node.tryGetContext('customRepositorySecretName')}:SecretString:url}}`,
+      accessToken: `{{resolve:secretsmanager:${this.node.tryGetContext('customRepositorySecretName')}:SecretString:AccessToken}}`,
       description: 'Temporary Elevated Access Management Application',
       customRules: [
         {
@@ -89,13 +77,13 @@ export class TeamStack extends cdk.Stack {
       branchName: 'main',
       enableAutoBuild: true,
       environmentVariables: [
-        { name: 'SSO_LOGIN', value: props.login },
-        { name: 'TEAM_ACCOUNT', value: props.teamAccount },
-        { name: 'CLOUDTRAIL_AUDIT_LOGS', value: props.cloudTrailAuditLogs },
-        { name: 'TEAM_ADMIN_GROUP', value: props.teamAdminGroup },
-        { name: 'TEAM_AUDITOR_GROUP', value: props.teamAuditGroup },
-        { name: 'TAGS', value: props.teamTags || '' },
-        { name: 'AMPLIFY_CUSTOM_DOMAIN', value: props.customAmplifyDomain || '' },
+        { name: 'SSO_LOGIN', value: this.node.tryGetContext('login') },
+        { name: 'TEAM_ACCOUNT', value: this.node.tryGetContext('teamAccount') },
+        { name: 'CLOUDTRAIL_AUDIT_LOGS', value: this.node.tryGetContext('cloudTrailAuditLogs') },
+        { name: 'TEAM_ADMIN_GROUP', value: this.node.tryGetContext('teamAdminGroup')},
+        { name: 'TEAM_AUDITOR_GROUP', value: this.node.tryGetContext('teamAuditGroup')},
+        { name: 'TAGS', value: this.node.tryGetContext('teamTags') },
+        { name: 'AMPLIFY_CUSTOM_DOMAIN', value: this.node.tryGetContext('customAmplifyDomain')},
       ],
       tags: [{ key: 'Branch', value: 'main' }]
     });

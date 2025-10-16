@@ -25,7 +25,7 @@ def main():
     # Get Cognito User Pool ID
     try:
         user_pools = cognito_client.list_user_pools(MaxResults=10)['UserPools']
-        cognito_user_pool_id = next((p['Id'] for p in user_pools if 'amplifyAuthUserPool' in p['Name']), None)
+        cognito_user_pool_id = next((p['Id'] for p in user_pools if params.USER_POOL_NAME in p['Name']), None)
     except Exception as e:
         print(f"Error listing user pools: {e}")
         return

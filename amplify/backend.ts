@@ -2,7 +2,6 @@ import * as iam from "aws-cdk-lib/aws-iam"
 import { defineBackend } from '@aws-amplify/backend';
 import { auth } from './auth/resource';
 import { data } from './data/resource';
-import { teamPreTokenGenerationHandler } from './functions/teamPreTokenGeneration/resource';
 import { teamgetAccounts } from './functions/teamgetAccounts/resource';
 import { teamgetEntitlement } from './functions/teamgetEntitlement/resource';
 import { teamgetIdCGroups } from './functions/teamgetIdCGroups/resource';
@@ -29,7 +28,6 @@ import { createStepFunctions } from './custom/stepfunctions/resource';
 const backend = defineBackend({
   auth,
   data,
-  teamPreTokenGenerationHandler,
   teamgetAccounts,
   teamgetEntitlement,
   teamgetIdCGroups,
@@ -49,7 +47,6 @@ const backend = defineBackend({
   teamStatus
 });
 
-const teamPreTokenGenerationHandlerLambda = backend.teamPreTokenGenerationHandler.resources.lambda
 const teamgetAccountsLambda = backend.teamgetAccounts.resources.lambda
 const teamgetEntitlementLambda = backend.teamgetEntitlement.resources.lambda
 const teamgetIdCGroupsLambda = backend.teamgetIdCGroups.resources.lambda
@@ -152,7 +149,6 @@ const teamRouterPolicyStatement = new iam.PolicyStatement({
   resources: ["*"],
 })
 
-teamPreTokenGenerationHandlerLambda.addToRolePolicy(teamPreTokenGenerationHandlerPolicyStatement)
 teamgetAccountsLambda.addToRolePolicy(organizationsPolicyStatement)
 teamgetEntitlementLambda.addToRolePolicy(organizationsPolicyStatement)
 teamgetIdCGroupsLambda.addToRolePolicy(teamgetIdCGroupsPolicyStatement)
