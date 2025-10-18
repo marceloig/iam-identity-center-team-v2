@@ -3,7 +3,6 @@
 // http://aws.amazon.com/agreement or other written agreement between Customer and either
 // Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
 import { generateClient } from 'aws-amplify/api';
-import { API, graphqlOperation } from 'aws-amplify';
 
 const client = generateClient();
 import {
@@ -386,11 +385,10 @@ export async function editPolicy(data) {
 
 export async function fetchEligibility(id) {
   try {
-    const approver = await API.graphql(
-      graphqlOperation(getEligibility, {
-        id: id,
-      })
-    );
+    const approver = await client.graphql({
+      query: getEligibility,
+      variables: { id: id }
+    });
     const data = await approver.data.getEligibility;
     return data;
   } catch (err) {
@@ -403,9 +401,10 @@ export async function getAllEligibility() {
   let data = [];
   try {
     do {
-    const request = await API.graphql(graphqlOperation(listEligibilities, {
-      nextToken
-    }));
+    const request = await client.graphql({
+      query: listEligibilities,
+      variables: { nextToken }
+    });
     data = data.concat(request.data.listEligibilities.items);
     nextToken = request.data.listEligibilities.nextToken;
   } while (nextToken);
@@ -418,11 +417,10 @@ export async function getAllEligibility() {
 
 export async function getSetting(id) {
   try {
-    const request = await API.graphql(
-      graphqlOperation(getSettings, {
-        id: id,
-      })
-    );
+    const request = await client.graphql({
+        query: getSettings,
+        variables: { id: id }
+    });
     let data = await request.data.getSettings;
     return data;
   } catch (err) {
@@ -432,9 +430,10 @@ export async function getSetting(id) {
 
 export async function createSetting(data) {
   try {
-    const req = await API.graphql(
-      graphqlOperation(createSettings, { input: data })
-    );
+    const req = await client.graphql({
+        query: createSettings,
+        variables: { input: data }
+    });
     return req.data.createSettings.id;
   } catch (err) {
     console.error("error creating settings", err);
@@ -442,9 +441,10 @@ export async function createSetting(data) {
 }
 export async function updateSetting(data) {
   try {
-    const req = await API.graphql(
-      graphqlOperation(updateSettings, { input: data })
-    );
+    const req = await client.graphql({
+        query: updateSettings,
+        variables: { input: data }
+    });
     return req.data.updateSettings;
   } catch (err) {
     console.error("error updating settings", err);
