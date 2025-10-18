@@ -3,6 +3,7 @@
 // http://aws.amazon.com/agreement or other written agreement between Customer and either
 // Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
 import { generateClient } from 'aws-amplify/api';
+import { API, graphqlOperation } from 'aws-amplify';
 
 const client = generateClient();
 import {
@@ -57,7 +58,7 @@ export async function fetchPermissions() {
     const data = await permissions.data.getPermissions;
     return data;
   } catch (err) {
-    console.log("error fetching permissions", err);
+    console.error("error fetching permissions", err);
   }
 }
 
@@ -67,7 +68,7 @@ export async function getMgmtAccountPs() {
     const data = await permissions.data.getMgmtPermissions;
     return data;
   } catch (err) {
-    console.log("error fetching permissions");
+    console.error("error fetching permissions", err);
   }
 }
 
@@ -85,7 +86,7 @@ export async function getUserRequests(email) {
   } while (nextToken);
     return data;
   } catch (err) {
-    console.log("error fetching requests");
+    console.error("error fetching requests", err);
     return {"error":err}
   }
 }
@@ -96,7 +97,7 @@ export async function fetchOUs() {
     const data = await OU.data.getOUs;
     return data;
   } catch (err) {
-    console.log("error fetching OUs");
+    console.error("error fetching OUs", err);
     return {"error":err}
   }
 }
@@ -110,7 +111,7 @@ export async function fetchOU(id) {
     const data = await OU.data.getOU;
     return data;
   } catch (err) {
-    console.log("error fetching OU");
+    console.error("error fetching OU", err);
   }
 }
 export async function getGroupMemberships(id) {
@@ -122,7 +123,7 @@ export async function getGroupMemberships(id) {
     const data = await members.data.listGroups;
     return data;
   } catch (err) {
-    console.log("error fetching members");
+    console.error("error fetching members", err);
   }
 }
 
@@ -132,7 +133,7 @@ export async function fetchIdCGroups() {
     const data = await groups.data.getIdCGroups;
     return data;
   } catch (err) {
-    console.log("error fetching IdC Groups");
+    console.error("error fetching IdC Groups", err);
   }
 }
 
@@ -142,7 +143,7 @@ export async function fetchUsers() {
     const data = await groups.data.getUsers;
     return data;
   } catch (err) {
-    console.log("error fetching IdC Groups");
+    console.error("error fetching IdC Groups", err);
   }
 }
 
@@ -160,7 +161,7 @@ export async function getSessionList() {
   } while (nextToken);
     return data;
   } catch (err) {
-    console.log("error fetching sessions");
+    console.error("error fetching sessions", err);
     return {"error":err}
   }
 }
@@ -174,7 +175,7 @@ export async function getRequest(id) {
     const data = await request.data.getRequests;
     return data;
   } catch (err) {
-    console.log("error fetching request");
+    console.error("error fetching request", err);
   }
 }
 
@@ -192,7 +193,7 @@ export async function getAllApprovers() {
     } while (nextToken);
     return data;
   } catch (err) {
-    console.log("error fetching approvers");
+    console.error("error fetching approvers", err);
     return {"error":err}
   }
 }
@@ -211,7 +212,7 @@ export async function sessions(filter) {
   } while (nextToken);
     return data;
   } catch (err) {
-    console.log("error fetching sessions");
+    console.error("error fetching sessions", err);
     return {"error":err}
   }
 }
@@ -222,7 +223,7 @@ export async function fetchLogs(args) {
     const data = await logs.data.getLogs;
     return data;
   } catch (err) {
-    console.log("error fetching logs");
+    console.error("error fetching logs", err);
   }
 }
 
@@ -232,7 +233,7 @@ export async function fetchPolicy(args) {
     const data = await entitlement.data.getUserPolicy;
     return data;
   } catch (err) {
-    console.log("error fetching Entitlement");
+    console.error("error fetching Entitlement", err);
   }
 }
 
@@ -246,7 +247,7 @@ export async function updateStatus(data) {
     });
     return req.data.updateRequests;
   } catch (err) {
-    console.log("error updating status");
+    console.error("error updating status", err);
   }
 }
 
@@ -258,7 +259,7 @@ export async function requestTeam(data) {
     });
     return req.data.createRequests.id;
   } catch (err) {
-    console.log("error creating request");
+    console.error("error creating request", err);
   }
 }
 export async function getSessionLogs(data) {
@@ -269,7 +270,7 @@ export async function getSessionLogs(data) {
     });
     return req.data.createSessions.id;
   } catch (err) {
-    console.log("error creating session Logs");
+    console.error("error creating session Logs", err);
   }
 }
 
@@ -281,7 +282,7 @@ export async function deleteSessionLogs(data) {
     });
     return req.data.deleteSessions;
   } catch (err) {
-    console.log("error deleting session log");
+    console.error("error deleting session log", err);
   }
 }
 
@@ -294,7 +295,7 @@ export async function getSession(id) {
     const data = await request.data.getSessions;
     return data;
   } catch (err) {
-    console.log("error fetching session log");
+    console.error("error fetching session log", err);
   }
 }
 
@@ -306,7 +307,7 @@ export async function addApprovers(data) {
     });
     return req.data.createApprovers.Id;
   } catch (err) {
-    console.log("error adding Approvers");
+    console.error("error adding Approvers", err);
   }
 }
 
@@ -318,7 +319,7 @@ export async function delApprover(data) {
     });
     return req.data.deleteApprovers;
   } catch (err) {
-    console.log("error deleting approver");
+    console.error("error deleting approver", err);
   }
 }
 
@@ -330,7 +331,7 @@ export async function editApprover(data) {
     });
     return req.data.updateApprovers;
   } catch (err) {
-    console.log("error updating approver");
+    console.error("error updating approver", err);
   }
 }
 
@@ -343,7 +344,7 @@ export async function fetchApprovers(id, type) {
     const data = await approver.data.getApprovers;
     return data;
   } catch (err) {
-    console.log("error fetching approvers");
+    console.error("error fetching approvers", err);
   }
 }
 
@@ -355,7 +356,7 @@ export async function addPolicy(data) {
     });
     return req.data.createEligibility.id;
   } catch (err) {
-    console.log("error creating policy");
+    console.error("error creating policy", err);
   }
 }
 
@@ -367,7 +368,7 @@ export async function delPolicy(data) {
     });
     return req.data.deleteEligibility;
   } catch (err) {
-    console.log("error deleting policy");
+    console.error("error deleting policy", err);
   }
 }
 
@@ -379,7 +380,7 @@ export async function editPolicy(data) {
     });
     return req.data.updateEligibility;
   } catch (err) {
-    console.log("error updating policy");
+    console.error("error updating policy", err);
   }
 }
 
@@ -393,7 +394,7 @@ export async function fetchEligibility(id) {
     const data = await approver.data.getEligibility;
     return data;
   } catch (err) {
-    console.log("error fetching eligibility");
+    console.error("error fetching eligibility", err);
   }
 }
 
@@ -410,7 +411,7 @@ export async function getAllEligibility() {
   } while (nextToken);
     return data;
   } catch (err) {
-    console.log("error fetching eligibility");
+    console.error("error fetching eligibility", err);
     return {"error":err}
   }
 }
@@ -425,7 +426,7 @@ export async function getSetting(id) {
     let data = await request.data.getSettings;
     return data;
   } catch (err) {
-    console.log("error fetching settings");
+    console.error("error fetching settings", err);
   }
 }
 
@@ -436,7 +437,7 @@ export async function createSetting(data) {
     );
     return req.data.createSettings.id;
   } catch (err) {
-    console.log("error creating settings");
+    console.error("error creating settings", err);
   }
 }
 export async function updateSetting(data) {
@@ -446,7 +447,7 @@ export async function updateSetting(data) {
     );
     return req.data.updateSettings;
   } catch (err) {
-    console.log("error updating settings");
+    console.error("error updating settings", err);
   }
 }
 
@@ -454,6 +455,6 @@ export async function revokePim(data) {
   try {
     updateRequests(data).then(() => {});
   } catch (err) {
-    console.log("error revoking request");
+    console.error("error revoking request", err);
   }
 }

@@ -1,4 +1,13 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
+import {teamgetAccounts} from '../functions/teamgetAccounts/resource.js';
+import {teamgetIdCGroups} from '../functions/teamgetIdCGroups/resource.js';
+import {teamgetMgmtAccountDetails} from '../functions/teamgetMgmtAccountDetails/resource.js';
+import {teamgetOUs} from '../functions/teamgetOUs/resource.js';
+import {teamgetOU} from '../functions/teamgetOU/resource.js';
+import {teamgetPermissions} from '../functions/teamgetPermissions/resource.js';
+import {teamgetUsers} from '../functions/teamgetUsers/resource.js';
+import {teamPublishOUs} from '../functions/teamPublishOUs/resource.js';
+
 
 const schema = a.schema({
   // Main models
@@ -238,76 +247,76 @@ const schema = a.schema({
   getAccounts: a
     .query()
     .returns(a.ref('Accounts').array())
-    .handler(a.handler.function('teamgetAccounts'))
+    .handler(a.handler.function(teamgetAccounts))
     .authorization((allow) => [allow.authenticated()]),
 
   getOUs: a
     .query()
     .returns(a.string())
-    .handler(a.handler.function('teamgetOUs'))
+    .handler(a.handler.function(teamgetOUs))
     .authorization((allow) => [allow.authenticated()]),
 
   getOU: a
     .query()
     .arguments({ id: a.string() })
     .returns(a.ref('OU'))
-    .handler(a.handler.function('teamgetOU'))
+    .handler(a.handler.function(teamgetOU))
     .authorization((allow) => [allow.authenticated()]),
 
   getPermissions: a
     .query()
     .returns(a.ref('Permission'))
-    .handler(a.handler.function('teamgetPermissions'))
+    .handler(a.handler.function(teamgetPermissions))
     .authorization((allow) => [allow.authenticated()]),
 
   getMgmtPermissions: a
     .query()
     .returns(a.ref('MgmtPs'))
-    .handler(a.handler.function('teamgetMgmtAccountDetails'))
+    .handler(a.handler.function(teamgetMgmtAccountDetails))
     .authorization((allow) => [allow.authenticated()]),
 
   getIdCGroups: a
     .query()
     .returns(a.ref('IdCGroups').array())
-    .handler(a.handler.function('teamgetIdCGroups'))
+    .handler(a.handler.function(teamgetIdCGroups))
     .authorization((allow) => [allow.authenticated()]),
 
   getUsers: a
     .query()
     .returns(a.ref('Users').array())
-    .handler(a.handler.function('teamgetUsers'))
+    .handler(a.handler.function(teamgetUsers))
     .authorization((allow) => [allow.authenticated()]),
 
   // Custom mutations
-  publishPolicy: a
-    .mutation()
-    .arguments({
-      result: a.json(),
-    })
-    .returns(a.ref('Policy'))
-    .authorization((allow) => [
-      allow.authenticated(),
-    ]).handler(a.handler.function('publishPolicy')),
+  // publishPolicy: a
+  //   .mutation()
+  //   .arguments({
+  //     result: a.json(),
+  //   })
+  //   .returns(a.ref('Policy'))
+  //   .authorization((allow) => [
+  //     allow.authenticated(),
+  //   ]),
 
-  publishOUs: a
-    .mutation()
-    .arguments({
-      result: a.json(),
-    })
-    .returns(a.ref('OUs'))
-    .authorization((allow) => [
-      allow.authenticated(),
-    ]).handler(a.handler.function('teamPublishOUs')),
+  // publishOUs: a
+  //   .mutation()
+  //   .arguments({
+  //     result: a.json(),
+  //   })
+  //   .returns(a.ref('OUs'))
+  //   .authorization((allow) => [
+  //     allow.authenticated(),
+  //   ]).handler(a.handler.function(teamPublishOUs)),
 
-  publishPermissions: a
-    .mutation()
-    .arguments({
-      result: a.json(),
-    })
-    .returns(a.ref('Permission'))
-    .authorization((allow) => [
-      allow.authenticated(),
-    ]).handler(a.handler.function('publishPermissions')),
+  // publishPermissions: a
+  //   .mutation()
+  //   .arguments({
+  //     result: a.json(),
+  //   })
+  //   .returns(a.ref('Permission'))
+  //   .authorization((allow) => [
+  //     allow.authenticated(),
+  //   ]),
 });
 
 export type Schema = ClientSchema<typeof schema>;

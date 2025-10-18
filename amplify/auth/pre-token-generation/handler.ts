@@ -4,6 +4,7 @@ import { DynamoDBClient, GetItemCommand } from "@aws-sdk/client-dynamodb";
 import { SSOAdminClient, ListInstancesCommand } from "@aws-sdk/client-sso-admin";
 import { IdentitystoreClient, GetUserIdCommand, GetGroupIdCommand, ListGroupMembershipsForMemberCommand } from "@aws-sdk/client-identitystore";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
+//import { env } from '$amplify/env/pre-token-generation'; // the import is '$amplify/env/<function-name>'
 
 const settingsTableName = process.env.SETTINGS_TABLE_NAME;
 const dynamodb = new DynamoDBClient({});
@@ -43,9 +44,7 @@ async function getIdentityStoreId() {
     }
 }
 
-const ssoInstance = await getIdentityStoreId();
-
-async function getUser(username: string) {
+async function getUser(ssoInstance: string, username: string) {
     try {
         const command = new GetUserIdCommand({
             IdentityStoreId: ssoInstance,
@@ -63,7 +62,7 @@ async function getUser(username: string) {
     }
 }
 
-async function getGroup(group: string) {
+async function getGroup(ssoInstance: string, group: string) {
     try {
         const command = new GetGroupIdCommand({
             IdentityStoreId: ssoInstance,
@@ -81,7 +80,7 @@ async function getGroup(group: string) {
     }
 }
 
-async function listIdcGroupMembership(userId: string) {
+async function listIdcGroupMembership(ssoInstance: string, userId: string) {
     try {
         const command = new ListGroupMembershipsForMemberCommand({
             IdentityStoreId: ssoInstance,
@@ -98,15 +97,16 @@ async function listIdcGroupMembership(userId: string) {
 
 export const handler: PreTokenGenerationTriggerHandler = async (event) => {
     const { teamAdminGroup, teamAuditorGroup } = await getTeamGroups();
+    const ssoInstance = await getIdentityStoreId() || "";
 
     const user = event.userName.split("_", 2)[1];
-    const userId = await getUser(user);
-    const admin = await getGroup(teamAdminGroup);
-    const auditor = await getGroup(teamAuditorGroup);
+    const userId = await getUser(ssoInstance, user);
+    const admin = await getGroup(ssoInstance, teamAdminGroup);
+    const auditor = await getGroup(ssoInstance, teamAuditorGroup);
     const groups = [];
     let groupIds = "";
 
-    const groupData = await listIdcGroupMembership(userId || "");
+    const groupData = await listIdcGroupMembership(ssoInstance, userId || "");
 
     if (groupData) {
         for (const group of groupData) {

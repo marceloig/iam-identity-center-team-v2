@@ -2,6 +2,7 @@ import * as iam from "aws-cdk-lib/aws-iam"
 import { defineBackend } from '@aws-amplify/backend';
 import { auth } from './auth/resource';
 import { data } from './data/resource';
+import { preTokenGeneration } from './auth/pre-token-generation/resource';
 import { teamgetAccounts } from './functions/teamgetAccounts/resource';
 import { teamgetEntitlement } from './functions/teamgetEntitlement/resource';
 import { teamgetIdCGroups } from './functions/teamgetIdCGroups/resource';
@@ -28,6 +29,7 @@ import { createStepFunctions } from './custom/stepfunctions/resource';
 const backend = defineBackend({
   auth,
   data,
+  preTokenGeneration,
   teamgetAccounts,
   teamgetEntitlement,
   teamgetIdCGroups,
@@ -44,9 +46,11 @@ const backend = defineBackend({
   teamPublishOUs,
   teamqueryLogs,
   teamRouter,
-  teamStatus
+  teamStatus,
 });
 
+const userPool = backend.auth.resources.userPool;
+const preTokenGenerationLambda = backend.preTokenGeneration.resources.lambda;
 const teamgetAccountsLambda = backend.teamgetAccounts.resources.lambda
 const teamgetEntitlementLambda = backend.teamgetEntitlement.resources.lambda
 const teamgetIdCGroupsLambda = backend.teamgetIdCGroups.resources.lambda
@@ -69,6 +73,8 @@ const teamPreTokenGenerationHandlerPolicyStatement = new iam.PolicyStatement({
     "identitystore:GetGroupId",
     "identitystore:ListGroupMembershipsForMember",
     "identitystore:ListInstances",
+    "identitystore:ListGroups",
+    "sso:ListInstances"
   ],
   resources: ["*"],
 })
@@ -149,6 +155,11 @@ const teamRouterPolicyStatement = new iam.PolicyStatement({
   resources: ["*"],
 })
 
+preTokenGenerationLambda.addPermission('AllowCognitoInvokePreTokenGeneration', {
+  principal: new iam.ServicePrincipal('cognito-idp.amazonaws.com'),
+  sourceArn: userPool.userPoolArn,
+});
+preTokenGenerationLambda.addToRolePolicy(teamPreTokenGenerationHandlerPolicyStatement)
 teamgetAccountsLambda.addToRolePolicy(organizationsPolicyStatement)
 teamgetEntitlementLambda.addToRolePolicy(organizationsPolicyStatement)
 teamgetIdCGroupsLambda.addToRolePolicy(teamgetIdCGroupsPolicyStatement)
@@ -164,6 +175,10 @@ teamListGroupsLambda.addToRolePolicy(teamListGroupsPolicyStatement)
 teamPublishOUsLambda.addToRolePolicy(organizationsPolicyStatement)
 teamqueryLogsLambda.addToRolePolicy(teamqueryLogsPolicyStatement)
 teamRouterLambda.addToRolePolicy(teamRouterPolicyStatement)
+
+backend.auth.resources.cfnResources.cfnUserPool.lambdaConfig = {
+  preTokenGeneration: backend.preTokenGeneration.resources.lambda.functionArn,
+};
 
 // Get the environment name
 const env = backend.stack.node.tryGetContext('env') || 'dev';

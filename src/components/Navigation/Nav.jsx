@@ -35,13 +35,13 @@ function Nav(props) {
 
   async function fetchUser() {
     try {
-      setUser(props.user.attributes.email);
+      setUser(props.user.username);
       setGroup(
         props.groups
       )
       setCognitoGroups(props.cognitoGroups);
     } catch (err) {
-      console.log("error fetching user data");
+      console.error("error fetching user data", err);
     }
   }
 
