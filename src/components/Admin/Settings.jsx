@@ -1,7 +1,3 @@
-// © 2023 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-// This AWS Content is provided subject to the terms of the AWS Customer Agreement available at
-// http://aws.amazon.com/agreement or other written agreement between Customer and either
-// Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
 import React, { useState, useEffect } from "react";
 import Box from "@awsui/components-react/box";
 import SpaceBetween from "@awsui/components-react/space-between";
@@ -31,23 +27,23 @@ import {
 } from "../Shared/RequestService";
 
 function Settings(props) {
-  const [duration, setDuration] = useState(null);
+  const [duration, setDuration] = useState("9");
   const [durationError, setDurationError] = useState("");
-  const [expiry, setExpiry] = useState(null);
+  const [expiry, setExpiry] = useState("3");
   const [expiryError, setExpiryError] = useState("");
-  const [comments, setComments] = useState(null);
-  const [ticketNo, setTicketNo] = useState(null);
-  const [approval, setApproval] = useState(null);
-  const [sesNotificationsEnabled, setSesNotificationsEnabled] = useState(null);
-  const [snsNotificationsEnabled, setSnsNotificationsEnabled] = useState(null);
+  const [comments, setComments] = useState(true);
+  const [ticketNo, setTicketNo] = useState(true);
+  const [approval, setApproval] = useState(true);
+  const [sesNotificationsEnabled, setSesNotificationsEnabled] = useState(false);
+  const [snsNotificationsEnabled, setSnsNotificationsEnabled] = useState(false);
   const [slackNotificationsEnabled, setSlackNotificationsEnabled] =
-    useState(null);
+    useState(false);
   const [slackToken, setSlackToken] = useState("");
   const [slackTokenError, setSlackTokenError] = useState("");
-  const [slackAuditNotificationsChannel, setSlackAuditNotificationsChannel] = useState(null);
-  const [sesSourceEmail, setSesSourceEmail] = useState(null);
+  const [slackAuditNotificationsChannel, setSlackAuditNotificationsChannel] = useState("");
+  const [sesSourceEmail, setSesSourceEmail] = useState("");
   const [sesSourceEmailError, setSesSourceEmailError] = useState("");
-  const [sesSourceArn, setSesSourceArn] = useState(null);
+  const [sesSourceArn, setSesSourceArn] = useState("");
   const [sesSourceArnError, setSesSourceArnError] = useState("");
   const [visible, setVisible] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);

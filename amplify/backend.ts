@@ -50,6 +50,7 @@ const backend = defineBackend({
 });
 
 const userPool = backend.auth.resources.userPool;
+const table = backend.data.resources.tables['Settings'];
 const preTokenGenerationLambda = backend.preTokenGeneration.resources.lambda;
 const teamgetAccountsLambda = backend.teamgetAccounts.resources.lambda
 const teamgetEntitlementLambda = backend.teamgetEntitlement.resources.lambda
@@ -74,7 +75,10 @@ const teamPreTokenGenerationHandlerPolicyStatement = new iam.PolicyStatement({
     "identitystore:ListGroupMembershipsForMember",
     "identitystore:ListInstances",
     "identitystore:ListGroups",
-    "sso:ListInstances"
+    "sso:ListInstances",
+    "dynamodb:GetItem",
+    "dynamodb:Query",
+    "dynamodb:Scan"
   ],
   resources: ["*"],
 })
@@ -159,6 +163,7 @@ preTokenGenerationLambda.addPermission('AllowCognitoInvokePreTokenGeneration', {
   principal: new iam.ServicePrincipal('cognito-idp.amazonaws.com'),
   sourceArn: userPool.userPoolArn,
 });
+
 preTokenGenerationLambda.addToRolePolicy(teamPreTokenGenerationHandlerPolicyStatement)
 teamgetAccountsLambda.addToRolePolicy(organizationsPolicyStatement)
 teamgetEntitlementLambda.addToRolePolicy(organizationsPolicyStatement)

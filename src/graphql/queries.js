@@ -333,11 +333,7 @@ export const getEligibility = /* GraphQL */ `
         id
         __typename
       }
-      permissions {
-        name
-        id
-        __typename
-      }
+      permissions
       ticketNo
       approvalRequired
       duration
@@ -369,11 +365,7 @@ export const listEligibilities = /* GraphQL */ `
           id
           __typename
         }
-        permissions {
-          name
-          id
-          __typename
-        }
+        permissions
         ticketNo
         approvalRequired
         duration
@@ -470,11 +462,7 @@ export const getUserPolicy = /* GraphQL */ `
           id
           __typename
         }
-        permissions {
-          name
-          id
-          __typename
-        }
+        permissions
         approvalRequired
         duration
         __typename

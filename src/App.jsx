@@ -1,11 +1,7 @@
-// © 2023 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-// This AWS Content is provided subject to the terms of the AWS Customer Agreement available at
-// http://aws.amazon.com/agreement or other written agreement between Customer and either
-// Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
 import React, { useEffect, useState } from "react";
 import { Amplify } from "aws-amplify";
 import { Hub } from "aws-amplify/utils";
-import { signInWithRedirect, getCurrentUser, fetchAuthSession } from "aws-amplify/auth";
+import { signInWithRedirect, fetchAuthSession, fetchUserAttributes} from "aws-amplify/auth";
 import { Spin, Layout } from "antd";
 import outputs from "../amplify_outputs.json";
 import Nav from "./components/Navigation/Nav";
@@ -90,10 +86,11 @@ function App() {
 
   async function getUser() {
     try {
-      const userData = await getCurrentUser();
+      const userData = await fetchUserAttributes();
       return userData;
-    } catch {
+    } catch (error) {
       setLoading(false);
+      console.error("Error getting user:", error);
       return console.log("Not signed in");
     }
   }
