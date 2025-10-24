@@ -23,9 +23,6 @@ import { teamStatus } from './functions/teamStatus/resource';
 import { createSnsNotificationTopic } from './custom/sns/resource';
 import { createStepFunctions } from './custom/stepfunctions/resource';
 
-/**
- * @see https://docs.amplify.aws/react/build-a-backend/ to add storage, functions, and more
- */
 const backend = defineBackend({
   auth,
   data,
@@ -163,6 +160,8 @@ preTokenGenerationLambda.addPermission('AllowCognitoInvokePreTokenGeneration', {
   principal: new iam.ServicePrincipal('cognito-idp.amazonaws.com'),
   sourceArn: userPool.userPoolArn,
 });
+
+//backend.teamgetAccounts.addEnvironment('ACCOUNT_ID', '123456')
 
 preTokenGenerationLambda.addToRolePolicy(teamPreTokenGenerationHandlerPolicyStatement)
 teamgetAccountsLambda.addToRolePolicy(organizationsPolicyStatement)

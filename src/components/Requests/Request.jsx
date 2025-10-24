@@ -123,6 +123,13 @@ function Request(props) {
   };
 
   function publishEvent() {
+    // const sub = client.models.Todo.observeQuery().subscribe({
+    //   next: ({ items, isSynced }) => {
+    //     setTodos([...items]);
+    //   },
+    // });
+    // return () => sub.unsubscribe();
+
     const subscription = client.graphql({ query: onPublishPolicy }).subscribe({
       next: (result) => {
         const policy = result.data.onPublishPolicy.policy;

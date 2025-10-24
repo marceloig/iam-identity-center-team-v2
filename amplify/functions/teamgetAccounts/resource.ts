@@ -13,6 +13,9 @@ export const teamgetAccounts = defineFunction(
             handler: "src/index.handler",
             runtime: Runtime.PYTHON_3_13, // or any other python version
             timeout: Duration.seconds(20), //  default is 3 seconds
+            environment: {
+                ACCOUNT_ID: process.env.TEAM_ACCOUNT || '', // will be set in the backend.ts
+            },
             code: Code.fromAsset(functionDir, {
                 bundling: {
                     image: DockerImage.fromRegistry("dummy"), // replace with desired image from AWS ECR Public Gallery

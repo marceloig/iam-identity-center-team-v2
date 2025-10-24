@@ -28,7 +28,7 @@ function Header(props) {
         visible={visible}
         onDismiss={() => setVisible(false)}
       >
-        🚀 TEAM v1.2.0 introduces support for the use of external repositories due to CodeCommit deprecation 
+        🚀 TEAM v2.0.0 refactor to Amplify Gen 2
       </Alert>
     );
   }
@@ -62,8 +62,8 @@ function Header(props) {
           },
           {
             type: "button",
-            text: "v1.4.1",
-            href: "https://github.com/aws-samples/iam-identity-center-team/releases/tag/v1.4.1",
+            text: "v2.0.0",
+            href: "https://github.com/marceloig/iam-identity-center-team-v2",
             external: true,
             externalIconAriaLabel: " (opens in a new tab)",
           },
@@ -86,22 +86,15 @@ function Header(props) {
                   {
                     id: "documentation",
                     text: "Documentation",
-                    href: "https://aws-samples.github.io/iam-identity-center-team/",
+                    href: "https://github.com/marceloig/iam-identity-center-team-v2",
                     external: true,
                     externalIconAriaLabel: " (opens in new tab)",
                   },
                   { id: "support", text: "Support" },
                   {
-                    id: "feedback",
-                    text: "Feedback",
-                    href: "https://pulse.aws/survey/PZDTVK85",
-                    external: true,
-                    externalIconAriaLabel: " (opens in new tab)",
-                  },
-                  {
                     id: "bug",
                     text: "Report Bug",
-                    href: "https://github.com/aws-samples/iam-identity-center-team/issues",
+                    href: "https://github.com/marceloig/iam-identity-center-team-v2/issues",
                     external: true,
                     externalIconAriaLabel: " (opens in new tab)",
                   },

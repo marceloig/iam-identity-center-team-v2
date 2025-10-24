@@ -1,5 +1,8 @@
 import { generateClient } from 'aws-amplify/api';
 
+/**
+ * @type {import('aws-amplify/data').Client<import('../amplify/data/resource').Schema>}
+ */
 const client = generateClient();
 import {
   getAccounts,
@@ -39,18 +42,18 @@ import {
 
 export async function fetchAccounts() {
   try {
-    const accounts = await client.graphql({ query: getAccounts });
-    const data = await accounts.data.getAccounts;
+    const accounts = await client.queries.getAccounts();
+    const data = accounts.data;
     return data;
   } catch (err) {
-    console.log("error fetching accounts");
+    console.error("error fetching accounts", err);
   }
 }
 
 export async function fetchPermissions() {
   try {
-    const permissions = await client.graphql({ query: getPermissions });
-    const data = await permissions.data.getPermissions;
+    const permissions = await client.queries.getPermissions();
+    const data = permissions.data;
     return data;
   } catch (err) {
     console.error("error fetching permissions", err);
@@ -59,8 +62,8 @@ export async function fetchPermissions() {
 
 export async function getMgmtAccountPs() {
   try {
-    const permissions = await client.graphql({ query: getMgmtPermissions });
-    const data = await permissions.data.getMgmtPermissions;
+    const permissions = await client.queries.getMgmtPermissions()
+    const data = permissions.data;
     return data;
   } catch (err) {
     console.error("error fetching permissions", err);
@@ -72,12 +75,9 @@ export async function getUserRequests(email) {
   let data = [];
   try {
     do {
-    const requests = await client.graphql({
-      query: requestByEmailAndStatus,
-      variables: { email: email, nextToken }
-    });
-    data = data.concat(requests.data.requestByEmailAndStatus.items);
-    nextToken = requests.data.requestByEmailAndStatus.nextToken;
+    const requests = await client.models.requests.requestByEmailAndStatus({ email: email, nextToken })
+    data = data.concat(requests.data);
+    nextToken = requests.nextToken;
   } while (nextToken);
     return data;
   } catch (err) {
@@ -88,8 +88,8 @@ export async function getUserRequests(email) {
 
 export async function fetchOUs() {
   try {
-    const OU = await client.graphql({ query: getOUs });
-    const data = await OU.data.getOUs;
+    const OU = await client.queries.getOUs();
+    const data = OU.data;
     return data;
   } catch (err) {
     console.error("error fetching OUs", err);
@@ -103,6 +103,7 @@ export async function fetchOU(id) {
       query: getOU,
       variables: { id: id }
     });
+    const test = await client.queries.getOU({ id: id })
     const data = await OU.data.getOU;
     return data;
   } catch (err) {
@@ -115,6 +116,7 @@ export async function getGroupMemberships(id) {
       query: listGroups,
       variables: { groupIds: id }
     });
+    const test = await client.queries.listGroups({ groupIds: id })
     const data = await members.data.listGroups;
     return data;
   } catch (err) {
@@ -124,8 +126,8 @@ export async function getGroupMemberships(id) {
 
 export async function fetchIdCGroups() {
   try {
-    const groups = await client.graphql({ query: getIdCGroups });
-    const data = await groups.data.getIdCGroups;
+    const groups = await client.queries.getIdCGroups();
+    const data = await groups.data;
     return data;
   } catch (err) {
     console.error("error fetching IdC Groups", err);
@@ -134,8 +136,8 @@ export async function fetchIdCGroups() {
 
 export async function fetchUsers() {
   try {
-    const groups = await client.graphql({ query: getUsers });
-    const data = await groups.data.getUsers;
+    const groups = await client.queries.getUsers()
+    const data = await groups.data;
     return data;
   } catch (err) {
     console.error("error fetching IdC Groups", err);
@@ -151,6 +153,7 @@ export async function getSessionList() {
       query: listRequests,
       variables: { nextToken }
     });
+    
     data = data.concat(request.data.listRequests.items);
     nextToken = request.data.listRequests.nextToken;
   } while (nextToken);
@@ -224,8 +227,9 @@ export async function fetchLogs(args) {
 
 export async function fetchPolicy(args) {
   try {
-    const entitlement = await client.graphql({ query: getUserPolicy, variables: args });
-    const data = await entitlement.data.getUserPolicy;
+    const entitlement = await client.queries.getUserPolicy(args)
+    
+    const data = await entitlement.data;
     return data;
   } catch (err) {
     console.error("error fetching Entitlement", err);
@@ -345,11 +349,8 @@ export async function fetchApprovers(id, type) {
 
 export async function addPolicy(data) {
   try {
-    const req = await client.graphql({
-      query: createEligibility,
-      variables: { input: data }
-    });
-    return req.data.createEligibility.id;
+    const req = await client.models.Eligibility.create(data)
+    return req.id;
   } catch (err) {
     console.error("error creating policy", err);
   }
@@ -397,12 +398,9 @@ export async function getAllEligibility() {
   let data = [];
   try {
     do {
-    const request = await client.graphql({
-      query: listEligibilities,
-      variables: { nextToken }
-    });
-    data = data.concat(request.data.listEligibilities.items);
-    nextToken = request.data.listEligibilities.nextToken;
+    const request = await client.models.Eligibility.list({ nextToken })
+    data = data.concat(request.data);
+    nextToken = request.nextToken;
   } while (nextToken);
     return data;
   } catch (err) {

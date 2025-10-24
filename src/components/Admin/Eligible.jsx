@@ -473,18 +473,11 @@ function Eligible(props) {
 
   function getOUs() {
     setOUStatus("loading");
-    fetchOUs().then(() =>{
-      const subscription = client.graphql({
-        query: onPublishOUs
-      }).subscribe({
-        next: (result) => {
-          const data = result.data.onPublishOUs.ous
-          setOUs(JSON.parse(data));
-          setOUStatus("finished");
-          subscription.unsubscribe();
-        },
-      });
+    fetchOUs().then((data) => {
+      setOUs(JSON.parse(data));
+      setOUStatus("finished");
     });
+    
   }
 
   function getAccounts() {
@@ -498,17 +491,8 @@ function Eligible(props) {
   function getPermissions() {
     setPermissionStatus("loading");
     fetchPermissions().then((data) => {
-      const subscription = client.graphql({
-        query: onPublishPermissions
-      }).subscribe({
-        next: (result) => {
-          if (result.data.onPublishPermissions.id === data.id) {
-            setPermissions(result.data.onPublishPermissions.permissions);
-            setPermissionStatus("finished");
-            subscription.unsubscribe();
-          }
-        },
-      });
+      setPermissions(data.permissions);
+      setPermissionStatus("finished");
     });
   }
 

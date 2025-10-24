@@ -6,8 +6,9 @@ import {teamgetOUs} from '../functions/teamgetOUs/resource.js';
 import {teamgetOU} from '../functions/teamgetOU/resource.js';
 import {teamgetPermissions} from '../functions/teamgetPermissions/resource.js';
 import {teamgetUsers} from '../functions/teamgetUsers/resource.js';
-import {teamPublishOUs} from '../functions/teamPublishOUs/resource.js';
-
+import {teamqueryLogs} from '../functions/teamqueryLogs/resource.js';  
+import {teamgetUserPolicy} from '../functions/teamgetUserPolicy/resource.js';  
+import {teamListGroups} from '../functions/teamListGroups/resource.js'; 
 
 const schema = a.schema({
   // Main models
@@ -155,9 +156,9 @@ const schema = a.schema({
       id: a.id().required(),
       name: a.string(),
       type: a.string(),
-      accounts: a.json(),
-      ous: a.json(),
-      permissions: a.json(),
+      accounts: a.ref('Accounts').array(),
+      ous: a.ref('data').array(),
+      permissions: a.ref('data').array(),
       ticketNo: a.string(),
       approvalRequired: a.boolean(),
       duration: a.string(),
@@ -285,6 +286,26 @@ const schema = a.schema({
     .query()
     .returns(a.ref('Users').array())
     .handler(a.handler.function(teamgetUsers))
+    .authorization((allow) => [allow.authenticated()]),
+  
+  getLogs: a
+    .query()
+    .returns(a.ref('Logs').array())
+    .handler(a.handler.function(teamqueryLogs))
+    .authorization((allow) => [allow.authenticated()]),
+
+  getUserPolicy: a
+    .query()
+    .arguments({ userId: a.string(), groupIds: a.string().array() })
+    .returns(a.ref('Policy').array())
+    .handler(a.handler.function(teamgetUserPolicy))
+    .authorization((allow) => [allow.authenticated()]),
+
+  listGroups: a
+    .query()
+    .arguments({ groupIds: a.string().array() })
+    .returns(a.ref('Members').array())
+    .handler(a.handler.function(teamListGroups))
     .authorization((allow) => [allow.authenticated()]),
 
   // Custom mutations
