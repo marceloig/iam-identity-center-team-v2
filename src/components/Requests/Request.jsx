@@ -119,17 +119,17 @@ function Request(props) {
       userId: props.userId,
       groupIds: props.groupIds,
     };
-    fetchPolicy(args)
+    fetchPolicy(args).then((data) => {
+      if (data) {
+        setItem(data.policy);
+        setAccounts(concatenateAccounts(data.policy));
+      }
+      setAccountStatus("finished");
+      setPermissionStatus("finished");
+    }); 
   };
 
   function publishEvent() {
-    // const sub = client.models.Todo.observeQuery().subscribe({
-    //   next: ({ items, isSynced }) => {
-    //     setTodos([...items]);
-    //   },
-    // });
-    // return () => sub.unsubscribe();
-
     const subscription = client.graphql({ query: onPublishPolicy }).subscribe({
       next: (result) => {
         const policy = result.data.onPublishPolicy.policy;
@@ -175,7 +175,6 @@ function Request(props) {
     props.addNotification([]);
     getMgmtPs();
     setTime(moment().format());
-    publishEvent()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

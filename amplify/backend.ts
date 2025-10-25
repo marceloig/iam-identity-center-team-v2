@@ -46,8 +46,9 @@ const backend = defineBackend({
   teamStatus,
 });
 
+backend.teamgetUserPolicy.addEnvironment('POLICY_TABLE_NAME', backend.data.resources.tables['Eligibility'].tableName);
+
 const userPool = backend.auth.resources.userPool;
-const table = backend.data.resources.tables['Settings'];
 const preTokenGenerationLambda = backend.preTokenGeneration.resources.lambda;
 const teamgetAccountsLambda = backend.teamgetAccounts.resources.lambda
 const teamgetEntitlementLambda = backend.teamgetEntitlement.resources.lambda
@@ -112,7 +113,10 @@ const SSOPolicyStatement = new iam.PolicyStatement({
     "sso:ListInstances",
     "sso:ListTagsForResource",
     "sso:ListPermissionSetsProvisionedToAccount",
-    "organizations:DescribeOrganization"
+    "organizations:DescribeOrganization",
+    "dynamodb:GetItem",
+    "dynamodb:Query",
+    "dynamodb:Scan"
   ],
   resources: ["*"],
 })
@@ -161,8 +165,6 @@ preTokenGenerationLambda.addPermission('AllowCognitoInvokePreTokenGeneration', {
   sourceArn: userPool.userPoolArn,
 });
 
-//backend.teamgetAccounts.addEnvironment('ACCOUNT_ID', '123456')
-
 preTokenGenerationLambda.addToRolePolicy(teamPreTokenGenerationHandlerPolicyStatement)
 teamgetAccountsLambda.addToRolePolicy(organizationsPolicyStatement)
 teamgetEntitlementLambda.addToRolePolicy(organizationsPolicyStatement)
@@ -183,6 +185,8 @@ teamRouterLambda.addToRolePolicy(teamRouterPolicyStatement)
 backend.auth.resources.cfnResources.cfnUserPool.lambdaConfig = {
   preTokenGeneration: backend.preTokenGeneration.resources.lambda.functionArn,
 };
+
+//backend.teamgetUserPolicy.addEnvironment('POLICY_TABLE_NAME', table.tableName);
 
 // Get the environment name
 const env = backend.stack.node.tryGetContext('env') || 'dev';

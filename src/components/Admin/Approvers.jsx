@@ -376,17 +376,9 @@ function Approvers(props) {
 
   function getOUs() {
     setOUStatus("loading");
-    fetchOUs().then(() =>{
-      const subscription = client.graphql({
-        query: onPublishOUs
-      }).subscribe({
-        next: (result) => {
-          const data = result.data.onPublishOUs.ous
-          setOUs(JSON.parse(data));
-          setOUStatus("finished");
-          subscription.unsubscribe();
-        },
-      });
+    fetchOUs().then((data) =>{
+      setOUs(JSON.parse(data));
+      setOUStatus("finished");
     });
   }
 

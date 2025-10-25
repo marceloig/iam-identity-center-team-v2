@@ -1,14 +1,14 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
-import {teamgetAccounts} from '../functions/teamgetAccounts/resource.js';
-import {teamgetIdCGroups} from '../functions/teamgetIdCGroups/resource.js';
-import {teamgetMgmtAccountDetails} from '../functions/teamgetMgmtAccountDetails/resource.js';
-import {teamgetOUs} from '../functions/teamgetOUs/resource.js';
-import {teamgetOU} from '../functions/teamgetOU/resource.js';
-import {teamgetPermissions} from '../functions/teamgetPermissions/resource.js';
-import {teamgetUsers} from '../functions/teamgetUsers/resource.js';
-import {teamqueryLogs} from '../functions/teamqueryLogs/resource.js';  
-import {teamgetUserPolicy} from '../functions/teamgetUserPolicy/resource.js';  
-import {teamListGroups} from '../functions/teamListGroups/resource.js'; 
+import { teamgetAccounts } from '../functions/teamgetAccounts/resource.js';
+import { teamgetIdCGroups } from '../functions/teamgetIdCGroups/resource.js';
+import { teamgetMgmtAccountDetails } from '../functions/teamgetMgmtAccountDetails/resource.js';
+import { teamgetOUs } from '../functions/teamgetOUs/resource.js';
+import { teamgetOU } from '../functions/teamgetOU/resource.js';
+import { teamgetPermissions } from '../functions/teamgetPermissions/resource.js';
+import { teamgetUsers } from '../functions/teamgetUsers/resource.js';
+import { teamqueryLogs } from '../functions/teamqueryLogs/resource.js';
+import { teamgetUserPolicy } from '../functions/teamgetUserPolicy/resource.js';
+import { teamListGroups } from '../functions/teamListGroups/resource.js';
 
 const schema = a.schema({
   // Main models
@@ -20,7 +20,7 @@ const schema = a.schema({
         allow.group('Auditors').to(['read']),
         allow.owner().to(['read']),
         //allow.ownerDefinedIn('approver_ids').to(['read']),
-        allow.authenticated().to(['read', 'update']),
+        allow.authenticated()
       ]),
       accountName: a.string().required(),
       role: a.string().required(),
@@ -33,7 +33,7 @@ const schema = a.schema({
         allow.group('Auditors').to(['read']),
         allow.owner().to(['read']),
         //allow.ownerDefinedIn('approver_ids').to(['read']),
-        allow.authenticated().to(['read', 'update']),
+        allow.authenticated()
       ]),
       username: a.string().authorization((allow) => [
         allow.group('Auditors').to(['read']),
@@ -88,7 +88,7 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.group('Auditors').to(['read']),
       allow.owner().to(['update', 'read']),
-      allow.authenticated().to(['read', 'update']),
+      allow.authenticated(),
     ]),
 
   sessions: a
@@ -287,7 +287,7 @@ const schema = a.schema({
     .returns(a.ref('Users').array())
     .handler(a.handler.function(teamgetUsers))
     .authorization((allow) => [allow.authenticated()]),
-  
+
   getLogs: a
     .query()
     .returns(a.ref('Logs').array())
@@ -297,14 +297,14 @@ const schema = a.schema({
   getUserPolicy: a
     .query()
     .arguments({ userId: a.string(), groupIds: a.string().array() })
-    .returns(a.ref('Policy').array())
+    .returns(a.ref('Policy'))
     .handler(a.handler.function(teamgetUserPolicy))
     .authorization((allow) => [allow.authenticated()]),
 
   listGroups: a
     .query()
     .arguments({ groupIds: a.string().array() })
-    .returns(a.ref('Members').array())
+    .returns(a.ref('Members'))
     .handler(a.handler.function(teamListGroups))
     .authorization((allow) => [allow.authenticated()]),
 
