@@ -4,13 +4,6 @@ import { generateClient } from 'aws-amplify/api';
  * @type {import('aws-amplify/data').Client<import('../amplify/data/resource').Schema>}
  */
 const client = generateClient();
-import {
-  listRequests,
-  getRequests,
-  listApprovers,
-  getLogs,
-  getOU,
-} from "../../graphql/queries";
 
 export async function fetchAccounts() {
   try {
@@ -47,7 +40,7 @@ export async function getUserRequests(email) {
   let data = [];
   try {
     do {
-      const requests = await client.models.requests.requestByEmailAndStatus({ email: email, nextToken })
+      const requests = await client.models.Requests.RequestsByEmailAndStatus({ email: email, nextToken })
       data = data.concat(requests.data);
       nextToken = requests.nextToken;
     } while (nextToken);
@@ -71,12 +64,8 @@ export async function fetchOUs() {
 
 export async function fetchOU(id) {
   try {
-    const OU = await client.graphql({
-      query: getOU,
-      variables: { id: id }
-    });
-    const test = await client.queries.getOU({ id: id })
-    const data = await OU.data.getOU;
+    const OU = await client.queries.getOU({ id: id })
+    const data = await OU.data;
     return data;
   } catch (err) {
     console.error("error fetching OU", err);
@@ -117,13 +106,9 @@ export async function getSessionList() {
   let data = [];
   try {
     do {
-      const request = await client.graphql({
-        query: listRequests,
-        variables: { nextToken }
-      });
-
-      data = data.concat(request.data.listRequests.items);
-      nextToken = request.data.listRequests.nextToken;
+      const request = await client.models.Requests.list({ nextToken })
+      data = data.concat(request.data);
+      nextToken = request.nextToken;
     } while (nextToken);
     return data;
   } catch (err) {
@@ -134,11 +119,8 @@ export async function getSessionList() {
 
 export async function getRequest(id) {
   try {
-    const request = await client.graphql({
-      query: getRequests,
-      variables: { id: id }
-    });
-    const data = await request.data.getRequests;
+    const request = await client.models.Requests.get({ id: id })
+    const data = request.data;
     return data;
   } catch (err) {
     console.error("error fetching request", err);
@@ -150,12 +132,9 @@ export async function getAllApprovers() {
   let data = [];
   try {
     do {
-      const request = await client.graphql({
-        query: listApprovers,
-        variables: { nextToken }
-      });
-      data = data.concat(request.data.listApprovers.items);
-      nextToken = request.data.listApprovers.nextToken;
+      const request = await client.models.Approvers.list({ nextToken })
+      data = data.concat(request.data);
+      nextToken = request.nextToken;
     } while (nextToken);
     return data;
   } catch (err) {
@@ -169,12 +148,9 @@ export async function sessions(filter) {
   let data = [];
   try {
     do {
-      const request = await client.graphql({
-        query: listRequests,
-        variables: { filter: filter, nextToken }
-      });
-      data = data.concat(request.data.listRequests.items);
-      nextToken = request.data.listRequests.nextToken;
+      const request = await client.models.Requests.list({ nextToken })
+      data = data.concat(request.data);
+      nextToken = request.nextToken;
     } while (nextToken);
     return data;
   } catch (err) {
@@ -185,8 +161,8 @@ export async function sessions(filter) {
 
 export async function fetchLogs(args) {
   try {
-    const logs = await client.graphql({ query: getLogs, variables: args });
-    const data = await logs.data.getLogs;
+    const logs = await client.queries.getLogs(args)
+    const data = await logs.data;
     return data;
   } catch (err) {
     console.error("error fetching logs", err);
@@ -196,7 +172,6 @@ export async function fetchLogs(args) {
 export async function fetchPolicy(args) {
   try {
     const entitlement = await client.queries.getUserPolicy(args)
-
     const data = await entitlement.data;
     return data;
   } catch (err) {
@@ -208,7 +183,7 @@ export async function fetchPolicy(args) {
 // Mutations
 export async function updateStatus(data) {
   try {
-    const req = await client.models.requests.update(data);
+    const req = await client.models.Requests.update(data);
     return req.data;
   } catch (err) {
     console.error("error updating status", err);
@@ -217,7 +192,7 @@ export async function updateStatus(data) {
 
 export async function requestTeam(data) {
   try {
-    const req = await client.models.requests.create(data);
+    const req = await client.models.Requests.create(data);
     return req.data.id;
   } catch (err) {
     console.error("error creating request", err);
@@ -225,7 +200,7 @@ export async function requestTeam(data) {
 }
 export async function getSessionLogs(data) {
   try {
-    const req = await client.models.sessions.create(data);
+    const req = await client.models.Sessions.create(data);
     return req.data.id;
   } catch (err) {
     console.error("error creating session Logs", err);
@@ -234,7 +209,7 @@ export async function getSessionLogs(data) {
 
 export async function deleteSessionLogs(data) {
   try {
-    const req = await client.models.sessions.delete(data);
+    const req = await client.models.Sessions.delete(data);
     return req.data;
   } catch (err) {
     console.error("error deleting session log", err);
@@ -243,7 +218,7 @@ export async function deleteSessionLogs(data) {
 
 export async function getSession(id) {
   try {
-    const request = await client.models.sessions.get({ id: id });
+    const request = await client.models.Sessions.get({ id: id });
     const data = request.data;
     return data;
   } catch (err) {
@@ -370,7 +345,7 @@ export async function updateSetting(data) {
 
 export async function revokePim(data) {
   try {
-    client.models.requests.update(data).then(() => { });
+    client.models.Requests.update(data).then(() => { });
   } catch (err) {
     console.error("error revoking request", err);
   }

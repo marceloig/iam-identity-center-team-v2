@@ -12,15 +12,15 @@ import { teamListGroups } from '../functions/teamListGroups/resource.js';
 
 const schema = a.schema({
   // Main models
-  requests: a
+  Requests: a
     .model({
       id: a.id().required(),
       email: a.string(),
       accountId: a.string().required().authorization((allow) => [
         allow.group('Auditors').to(['read']),
-        allow.owner().to(['read']),
+        allow.owner().to(['read', 'create']),
         //allow.ownerDefinedIn('approver_ids').to(['read']),
-        allow.authenticated()
+        allow.authenticated().to(['read', 'update']),
       ]),
       accountName: a.string().required(),
       role: a.string().required(),
@@ -33,7 +33,7 @@ const schema = a.schema({
         allow.group('Auditors').to(['read']),
         allow.owner().to(['read']),
         //allow.ownerDefinedIn('approver_ids').to(['read']),
-        allow.authenticated()
+        allow.authenticated().to(['read', 'update']),
       ]),
       username: a.string().authorization((allow) => [
         allow.group('Auditors').to(['read']),
@@ -82,8 +82,8 @@ const schema = a.schema({
       ]),
     })
     .secondaryIndexes((index) => [
-      index('email').sortKeys(['status']).queryField('requestByEmailAndStatus').name('byEmailAndStatus'),
-      index('approverId').sortKeys(['status']).queryField('requestByApproverAndStatus').name('byApproverAndStatus'),
+      index('email').sortKeys(['status']).queryField('RequestsByEmailAndStatus').name('byEmailAndStatus'),
+      index('approverId').sortKeys(['status']).queryField('RequestsByApproverAndStatus').name('byApproverAndStatus'),
     ])
     .authorization((allow) => [
       allow.group('Auditors').to(['read']),
@@ -91,7 +91,7 @@ const schema = a.schema({
       allow.authenticated(),
     ]),
 
-  sessions: a
+  Sessions: a
     .model({
       id: a.id().required(),
       startTime: a.string(),
