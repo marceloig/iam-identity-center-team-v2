@@ -8,6 +8,7 @@ TEAM_AUDITOR_GROUP = "AWSTeamAuditors"
 TAGS = "project=iam-identity-center-team environment=prod"
 CLOUDTRAIL_AUDIT_LOGS = "read_write"
 SECRET_NAME = "TEAM-IDC-APP"
-USER_POOL_NAME = "amplifyAuthUserPool4BA7F805-RnohZ3wpdc90"
+USER_POOL_NAME = "amplifyAuthUserPool4BA7F805-HThgRAueEs0O"
+TEAM_ACCOUNT= "985539781022"
 # Uncomment the next line only if you have a custom domain
 # UI_DOMAIN = "portal.teamtest.online"
