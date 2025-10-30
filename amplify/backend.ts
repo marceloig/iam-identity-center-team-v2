@@ -1,4 +1,7 @@
 import * as iam from "aws-cdk-lib/aws-iam"
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { StreamViewType } from "aws-cdk-lib/aws-dynamodb";
+import { DynamoEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { defineBackend } from '@aws-amplify/backend';
 import { auth } from './auth/resource';
 import { data } from './data/resource';
@@ -48,6 +51,13 @@ const backend = defineBackend({
 
 backend.teamgetUserPolicy.addEnvironment('POLICY_TABLE_NAME', backend.data.resources.tables['Eligibility'].tableName);
 
+const { cfnResources } = backend.data.resources;
+
+cfnResources.amplifyDynamoDbTables["Requests"].streamSpecification = {
+  streamViewType: StreamViewType.NEW_AND_OLD_IMAGES,
+  
+};
+
 const userPool = backend.auth.resources.userPool;
 const preTokenGenerationLambda = backend.preTokenGeneration.resources.lambda;
 const teamgetAccountsLambda = backend.teamgetAccounts.resources.lambda
@@ -65,6 +75,13 @@ const teamListGroupsLambda = backend.teamListGroups.resources.lambda
 const teamPublishOUsLambda = backend.teamPublishOUs.resources.lambda
 const teamqueryLogsLambda = backend.teamqueryLogs.resources.lambda
 const teamRouterLambda = backend.teamRouter.resources.lambda
+
+backend.data.resources.tables['Requests'].grantStreamRead(teamRouterLambda);
+teamRouterLambda.addEventSource(new DynamoEventSource(backend.data.resources.tables['Requests'], {
+  startingPosition: lambda.StartingPosition.LATEST,
+  batchSize: 10,
+  retryAttempts: 3,
+}));
 
 const teamPreTokenGenerationHandlerPolicyStatement = new iam.PolicyStatement({
   actions: [

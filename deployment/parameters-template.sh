@@ -10,6 +10,7 @@ TEAM_AUDITOR_GROUP="team_auditor_group_name"
 TAGS="project=iam-identity-center-team environment=prod"
 CLOUDTRAIL_AUDIT_LOGS=arn:aws:cloudtrail:us-east-1:123456789101:eventdatastore/e646f20d-7959-4682-be84-6c5b8a37cf15
 SECRET_NAME=TEAM-IDC-APP
+USER_POOL_ID="us-east-2_xtNfARgbq"
 
 # Uncomment the next line only if you have a custom domain
 # UI_DOMAIN=portal.teamtest.online

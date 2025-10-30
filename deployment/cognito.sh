@@ -8,12 +8,9 @@ else
   export AWS_PROFILE=$TEAM_ACCOUNT_PROFILE
 fi
 
-green='\033[0;32m'
-clear='\033[0m'
 cognitoUserpoolId=$USER_POOL_ID
-cognitouserpoolhostedUIdomain=`aws cognito-idp describe-user-pool --region $REGION --user-pool-id $cognitoUserpoolId --output json | jq -r '.UserPool.Domain'`
-cognitoClientWebClientID=`aws cognito-idp list-user-pool-clients --region $REGION --user-pool-id $cognitoUserpoolId --output json | jq -r '.UserPoolClients[] | select(.ClientName | contains("amplifyAuthUserPoolAppClient")) | .ClientId'`
-cognitoHostedUIdomain=$cognitouserpoolhostedUIdomain.auth.$REGION.amazoncognito.com
+clientID=`aws cognito-idp list-user-pool-clients --region $REGION --user-pool-id $cognitoUserpoolId --output json | jq -r '.UserPoolClients[] | select(.ClientName | contains("amplifyAuthUserPoolAppClient")) | .ClientId'`
+
 
 amplifyAppId=`aws amplify list-apps --region $REGION --output json | jq -r '.apps[] | select(.name=="TEAM-IDC-APP") | .appId'`
 amplifyDomain=`aws amplify list-apps --region $REGION --output json | jq -r '.apps[] | select(.name=="TEAM-IDC-APP") | .defaultDomain'`
@@ -27,9 +24,13 @@ if [ -n "$amplifyCustomDomain" ]; then
   amplifyDomain=$([ -z "$amplifyCustomDomainPrefix" ] && echo $amplifyCustomDomain || echo $amplifyCustomDomainPrefix.$amplifyCustomDomain)
 fi
 
-echo $amplifyDomain
-applicationStartURL="https://$cognitoHostedUIdomain/authorize?client_id=$cognitoClientWebClientID&response_type=code&scope=aws.cognito.signin.user.admin+email+openid+phone+profile&redirect_uri=https://$amplifyDomain/&idp_identifier=team"
-applicationACSURL="https://$cognitoHostedUIdomain/saml2/idpresponse"
-applicationSAMLAudience="urn:amazon:cognito:sp:$cognitoUserpoolId"
-
-printf "\n${green}applicationStartURL:${clear} %s\n${green}applicationACSURL:${clear} %s\n${green}applicationSAMLAudience:${clear} %s\n\n" "$applicationStartURL" "$applicationACSURL" "$applicationSAMLAudience"
+aws cognito-idp create-identity-provider --region $REGION --user-pool-id $cognitoUserpoolId --provider-name=IDC --provider-type SAML --provider-details file://details.json --attribute-mapping email=Email --idp-identifiers team
+aws cognito-idp update-user-pool-client --region $REGION --user-pool-id $cognitoUserpoolId \
+--client-id $clientID \
+--refresh-token-validity 1 \
+--supported-identity-providers IDC \
+--allowed-o-auth-flows code \
+--allowed-o-auth-scopes "phone" "email" "openid" "profile" "aws.cognito.signin.user.admin" \
+--logout-urls "https://$amplifyDomain/"  \
+--callback-urls "https://$amplifyDomain/" \
+--allowed-o-auth-flows-user-pool-client

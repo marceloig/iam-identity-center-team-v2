@@ -1,4 +1,5 @@
 import { defineAuth } from '@aws-amplify/backend';
+import { preTokenGeneration } from './pre-token-generation/resource';
 
 /**
  * Define and configure your auth resource
@@ -14,4 +15,7 @@ export const auth = defineAuth({
       logoutUrls: ['http://localhost:5173/'],
     }
   },
+  triggers: {
+    preTokenGeneration
+  }
 });

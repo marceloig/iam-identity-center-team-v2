@@ -28,4 +28,7 @@ export const teamRouter = defineFunction(
                 },
             }),
         }),
+        {
+            resourceGroupName: 'data',
+        }
 );
