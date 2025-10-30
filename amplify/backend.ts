@@ -21,10 +21,10 @@ import { teamListGroups } from './functions/teamListGroups/resource';
 import { teamNotifications } from './functions/teamNotifications/resource';
 import { teamPublishOUs } from './functions/teamPublishOUs/resource';
 import { teamqueryLogs } from './functions/teamqueryLogs/resource';
-import { teamRouter } from './functions/teamRouter/resource';
 import { teamStatus } from './functions/teamStatus/resource';
 import { createSnsNotificationTopic } from './custom/sns/resource';
 import { createStepFunctions } from './custom/stepfunctions/resource';
+import { createLambdaTeamRouter } from './custom/functions/teamRouter/resource';
 
 const backend = defineBackend({
   auth,
@@ -45,7 +45,6 @@ const backend = defineBackend({
   teamNotifications,
   teamPublishOUs,
   teamqueryLogs,
-  teamRouter,
   teamStatus,
 });
 
@@ -74,7 +73,6 @@ const teamgetUsersLambda = backend.teamgetUsers.resources.lambda
 const teamListGroupsLambda = backend.teamListGroups.resources.lambda
 const teamPublishOUsLambda = backend.teamPublishOUs.resources.lambda
 const teamqueryLogsLambda = backend.teamqueryLogs.resources.lambda
-const teamRouterLambda = backend.teamRouter.resources.lambda
 
 backend.data.resources.tables['Requests'].grantStreamRead(teamRouterLambda);
 teamRouterLambda.addEventSource(new DynamoEventSource(backend.data.resources.tables['Requests'], {
@@ -218,3 +216,5 @@ createStepFunctions(
   backend.teamStatus.resources.lambda.functionArn,
   backend.teamNotifications.resources.lambda.functionArn
 );
+
+createLambdaTeamRouter(customResourceStack, env, backend.data.resources.tables);
