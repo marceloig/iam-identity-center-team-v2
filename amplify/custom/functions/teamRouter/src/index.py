@@ -364,7 +364,6 @@ def get_email(username):
         response = cognito.list_users(**kwargs)
         next_page = response.get('PaginationToken', None)
         users_remain = next_page is not None
-
     email_id = response['Users'][0]['Attributes'][0]['Value']
     return email_id
 
@@ -498,6 +497,7 @@ def request_is_updated(status,data,username,request_id):
     return updated
 
 def handler(event, context):
+    print("Received event: %s" % json.dumps(event))
     data = event["Records"].pop()["dynamodb"]["NewImage"]
     print("Checking if request is updated")
     status = data["status"]["S"]

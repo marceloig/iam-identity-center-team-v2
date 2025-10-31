@@ -39,7 +39,7 @@ const schema = a.schema({
         allow.group('Auditors').to(['read']),
         allow.owner().to(['read']),
         //allow.ownerDefinedIn('approver_ids').to(['update', 'read']),
-        allow.authenticated().to(['read', 'update']),
+        allow.authenticated().to(['create', 'read', 'update']),
       ]),
       approver: a.string(),
       approverId: a.string().authorization((allow) => [

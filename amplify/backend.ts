@@ -54,7 +54,7 @@ const { cfnResources } = backend.data.resources;
 
 cfnResources.amplifyDynamoDbTables["Requests"].streamSpecification = {
   streamViewType: StreamViewType.NEW_AND_OLD_IMAGES,
-  
+
 };
 
 const userPool = backend.auth.resources.userPool;
@@ -73,13 +73,6 @@ const teamgetUsersLambda = backend.teamgetUsers.resources.lambda
 const teamListGroupsLambda = backend.teamListGroups.resources.lambda
 const teamPublishOUsLambda = backend.teamPublishOUs.resources.lambda
 const teamqueryLogsLambda = backend.teamqueryLogs.resources.lambda
-
-backend.data.resources.tables['Requests'].grantStreamRead(teamRouterLambda);
-teamRouterLambda.addEventSource(new DynamoEventSource(backend.data.resources.tables['Requests'], {
-  startingPosition: lambda.StartingPosition.LATEST,
-  batchSize: 10,
-  retryAttempts: 3,
-}));
 
 const teamPreTokenGenerationHandlerPolicyStatement = new iam.PolicyStatement({
   actions: [
@@ -160,21 +153,6 @@ const teamqueryLogsPolicyStatement = new iam.PolicyStatement({
   resources: ["*"],
 })
 
-const teamRouterPolicyStatement = new iam.PolicyStatement({
-  actions: [
-    "identitystore:ListUsers",
-    "identitystore:GetUserId",
-    "sso:ListInstances",
-    "sso:DescribePermissionSet",
-    "identitystore:ListGroupMembershipsForMember",
-    "identitystore:ListGroupMemberships",
-    "identitystore:DescribeUser",
-    "organizations:Describe*",
-    "organizations:List*"
-  ],
-  resources: ["*"],
-})
-
 preTokenGenerationLambda.addPermission('AllowCognitoInvokePreTokenGeneration', {
   principal: new iam.ServicePrincipal('cognito-idp.amazonaws.com'),
   sourceArn: userPool.userPoolArn,
@@ -195,7 +173,6 @@ teamgetUsersLambda.addToRolePolicy(teamgetUsersPolicyStatement)
 teamListGroupsLambda.addToRolePolicy(teamListGroupsPolicyStatement)
 teamPublishOUsLambda.addToRolePolicy(organizationsPolicyStatement)
 teamqueryLogsLambda.addToRolePolicy(teamqueryLogsPolicyStatement)
-teamRouterLambda.addToRolePolicy(teamRouterPolicyStatement)
 
 backend.auth.resources.cfnResources.cfnUserPool.lambdaConfig = {
   preTokenGeneration: backend.preTokenGeneration.resources.lambda.functionArn,
@@ -207,14 +184,28 @@ backend.auth.resources.cfnResources.cfnUserPool.lambdaConfig = {
 const env = backend.stack.node.tryGetContext('env') || 'dev';
 const customResourceStack = backend.createStack('CustomResources');
 
-createSnsNotificationTopic(customResourceStack, env);
+const snsNotificationTopic = createSnsNotificationTopic(customResourceStack, env);
 
 // Create Step Functions with Lambda ARNs
-createStepFunctions(
+const stepFunctions = createStepFunctions(
   customResourceStack,
   env,
   backend.teamStatus.resources.lambda.functionArn,
   backend.teamNotifications.resources.lambda.functionArn
 );
 
-createLambdaTeamRouter(customResourceStack, env, backend.data.resources.tables);
+createLambdaTeamRouter(customResourceStack, 
+  env, 
+  backend.data.resources.tables, 
+  backend.auth.resources.userPool.userPoolId,
+  stepFunctions.grantStateMachine.stateMachineArn,
+  stepFunctions.revokeStateMachine.stateMachineArn,
+  stepFunctions.rejectStateMachine.stateMachineArn,
+  stepFunctions.scheduleStateMachine.stateMachineArn,
+  stepFunctions.approvalStateMachine.stateMachineArn,
+  snsNotificationTopic.topicArn,
+  process.env.IDC_LOGIN_URL || '',
+  backend.teamStatus.resources.lambda.functionArn,
+  backend.teamNotifications.resources.lambda.functionArn,
+  backend.data.graphqlUrl
+);

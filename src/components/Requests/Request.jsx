@@ -22,10 +22,11 @@ import {
 } from "../Shared/RequestService";
 import { useHistory } from "react-router-dom";
 import { generateClient } from 'aws-amplify/api';
-
-const client = generateClient();
+import { getCurrentUser } from "aws-amplify/auth";
 import { onPublishPolicy } from "../../graphql/subscriptions";
 import params from "../../parameters.json";
+
+const client = generateClient();
 
 function Request(props) {
   const [email, setEmail] = useState("");
@@ -178,7 +179,8 @@ function Request(props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function sendRequest() {
+  async function sendRequest() {
+    const user = await getCurrentUser();
     const data = {
       accountId: account.value,
       accountName: account.label,
@@ -188,6 +190,8 @@ function Request(props) {
       startTime: time,
       justification: justification,
       ticketNo: ticketNo,
+      status: "pending",
+      username: user.username,
     };
     requestTeam(data).then(() => {
       setSubmitLoading(false);
@@ -274,7 +278,7 @@ function Request(props) {
       const shouldSendRequest =
         !approvalRequired ||
         (await checkApprovalAndApproverGroups(account.value, role.value));
-      shouldSendRequest ? sendRequest() : sendError();
+      shouldSendRequest ? await sendRequest() : sendError();
     } else {
       setSubmitLoading(false);
     }
