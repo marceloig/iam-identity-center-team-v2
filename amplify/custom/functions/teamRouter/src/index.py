@@ -205,6 +205,7 @@ def get_user(username):
         if response['UserId']:
             return response['UserId']
         else:
+            print("[get_user] User not found")
             return
     except ClientError as e:
         print(e.response['Error']['Message'])
@@ -497,7 +498,7 @@ def request_is_updated(status,data,username,request_id):
     return updated
 
 def handler(event, context):
-    print("Received event: %s" % json.dumps(event))
+    print("handler event: %s" % json.dumps(event))
     data = event["Records"].pop()["dynamodb"]["NewImage"]
     print("Checking if request is updated")
     status = data["status"]["S"]

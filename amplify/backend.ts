@@ -1,7 +1,5 @@
 import * as iam from "aws-cdk-lib/aws-iam"
-import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { StreamViewType } from "aws-cdk-lib/aws-dynamodb";
-import { DynamoEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { defineBackend } from '@aws-amplify/backend';
 import { auth } from './auth/resource';
 import { data } from './data/resource';
@@ -178,7 +176,7 @@ backend.auth.resources.cfnResources.cfnUserPool.lambdaConfig = {
   preTokenGeneration: backend.preTokenGeneration.resources.lambda.functionArn,
 };
 
-//backend.teamgetUserPolicy.addEnvironment('POLICY_TABLE_NAME', table.tableName);
+backend.teamStatus.addEnvironment('API_TEAM_GRAPHQLAPIENDPOINTOUTPUT', backend.data.graphqlUrl);
 
 // Get the environment name
 const env = backend.stack.node.tryGetContext('env') || 'dev';

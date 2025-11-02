@@ -56,7 +56,7 @@ export function createStepFunctions(stack: Stack, env: string, teamStatusArn: st
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
             actions: ['dynamodb:UpdateItem'],
-            resources: [`arn:${stack.partition}:dynamodb:${stack.region}:${stack.account}:table/requests*`]
+            resources: [`arn:${stack.partition}:dynamodb:${stack.region}:${stack.account}:table/Requests*`]
           }),
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
@@ -123,7 +123,7 @@ export function createStepFunctions(stack: Stack, env: string, teamStatusArn: st
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
             actions: ['dynamodb:UpdateItem', 'dynamodb:GetItem'],
-            resources: [`arn:${stack.partition}:dynamodb:${stack.region}:${stack.account}:table/requests*`]
+            resources: [`arn:${stack.partition}:dynamodb:${stack.region}:${stack.account}:table/Requests*`]
           }),
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
@@ -192,7 +192,7 @@ export function createStepFunctions(stack: Stack, env: string, teamStatusArn: st
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
             actions: ['dynamodb:UpdateItem', 'dynamodb:GetItem'],
-            resources: [`arn:${stack.partition}:dynamodb:${stack.region}:${stack.account}:table/requests*`]
+            resources: [`arn:${stack.partition}:dynamodb:${stack.region}:${stack.account}:table/Requests*`]
           })
         ]
       })
@@ -236,7 +236,7 @@ export function createStepFunctions(stack: Stack, env: string, teamStatusArn: st
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
             actions: ['dynamodb:UpdateItem', 'dynamodb:GetItem'],
-            resources: [`arn:${stack.partition}:dynamodb:${stack.region}:${stack.account}:table/requests*`]
+            resources: [`arn:${stack.partition}:dynamodb:${stack.region}:${stack.account}:table/Requests*`]
           })
         ]
       })

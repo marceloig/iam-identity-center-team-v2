@@ -80,7 +80,8 @@ export function createLambdaTeamRouter(stack: Stack,
         "organizations:Describe*",
         "organizations:List*",
         "cognito-idp:ListUsers",
-        "appsync:GraphQL"
+        "appsync:GraphQL",
+        "states:StartExecution"
       ],
       resources: ["*"],
     }));

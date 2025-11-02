@@ -16,6 +16,9 @@ export const teamStatus = defineFunction(
             timeout: Duration.seconds(20),
             environment: {
                 API_TEAM_GRAPHQLAPIENDPOINTOUTPUT: "localhost",
+                REGION: process.env.REGION || "",
             },
-        }),
+        }),{
+            resourceGroupName: "teamStatus"
+        }
 );

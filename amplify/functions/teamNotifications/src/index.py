@@ -233,7 +233,7 @@ def send_slack_notifications(
             )
 
 
-def lambda_handler(event: dict, context):
+def handler(event: dict, context):
     ses_notifications_enabled = event.get("ses_notifications_enabled", "")
     ses_source_email = event.get("ses_source_email", "")
     ses_source_arn = event.get("ses_source_arn", "")
