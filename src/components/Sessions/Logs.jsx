@@ -18,6 +18,8 @@ import {
 import "../../index.css";
 import { CSVLink } from "react-csv";
 
+const client = generateClient();
+
 const COLUMN_DEFINITIONS = [
   {
     id: "eventID",
@@ -161,7 +163,7 @@ function Logs(props) {
     return items;
   }
 
-  function AddSessionLogs(expiry,endTime,username) {
+  function AddSessionLogs(expiry, endTime, username) {
     const data = {
       id: props.item.id,
       startTime: props.item.startTime,
@@ -175,31 +177,31 @@ function Logs(props) {
     getSessionLogs(data)
   }
 
-  function getQueryId(){
+  function getQueryId() {
     const username = props.item.username
     if (props.item.status === "in progress") {
-        const expiry = Math.floor(Date.now() / 1000);
-        const endTime = new Date().toISOString();
-        const args = {
-          id: props.item.id,
-        };
-        deleteSessionLogs(args).then(() => {
-          AddSessionLogs(expiry,endTime,username)
-        })
+      const expiry = Math.floor(Date.now() / 1000);
+      const endTime = new Date().toISOString();
+      const args = {
+        id: props.item.id,
+      };
+      deleteSessionLogs(args).then(() => {
+        AddSessionLogs(expiry, endTime, username)
+      })
     } else {
       getSession(props.item.id).then((data) => {
         if (data !== null) {
           getLogs(data.queryId);
         } else {
-          const expiry = Math.floor(Date.now() / 1000) + 432000 
+          const expiry = Math.floor(Date.now() / 1000) + 432000
           // Add an extra hour to end time to compensate PS session duration
           const endTime = new Date(Date.parse(props.item.endTime) + 60 * 60 * 1000).toISOString()
-          AddSessionLogs(expiry,endTime,username)
+          AddSessionLogs(expiry, endTime, username)
         }
       })
     }
   }
-  
+
   function getLogs(queryId) {
     let args = {
       queryId: queryId,
@@ -221,17 +223,13 @@ function Logs(props) {
   }
 
   function updateEvent() {
-    const client = generateClient();
-    client.graphql({
-      query: onUpdateSessions,
-      variables: {
-        filter: {
-          id: { eq: props.item.id },
-        },
-      }
+    const updateSub = client.models.Sessions.onCreate({
+      filter: {
+        id: { eq: props.item.id },
+      },
     }).subscribe({
-      next: ({ data }) => {
-        getLogs(data.onUpdateSessions.queryId);
+      next: (data) => {
+        getLogs(data.queryId);
       },
       error: (error) => console.warn(error),
     });
@@ -258,14 +256,14 @@ function Logs(props) {
             description="Session activity logs are delivered in near real time"
             actions={
               <SpaceBetween size="s" direction="horizontal">
-              {props.item.status === "in progress" &&
-                <Button
-                  iconName="refresh"
-                  onClick={handleRefresh}
-                  loading={refreshLoading}
-                />
+                {props.item.status === "in progress" &&
+                  <Button
+                    iconName="refresh"
+                    onClick={handleRefresh}
+                    loading={refreshLoading}
+                  />
                 }
-                
+
                 <div>
                   <Button
                     disabled={allItems.length === 0}

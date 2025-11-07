@@ -14,5 +14,12 @@ export const teamqueryLogs = defineFunction(
             handler: "handler",
             runtime: Runtime.NODEJS_22_X,
             timeout: Duration.seconds(20),
-        }),
+            environment: {
+                API_TEAM_GRAPHQLAPIENDPOINTOUTPUT: "localhost",
+                REGION: process.env.REGION!,
+                EVENT_DATA_STORE: process.env.CLOUDTRAIL_AUDIT_LOGS!,
+            },
+        }),{
+            resourceGroupName: "data"
+        }
 );

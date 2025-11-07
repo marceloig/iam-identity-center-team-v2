@@ -19,6 +19,6 @@ export const teamStatus = defineFunction(
                 REGION: process.env.REGION || "",
             },
         }),{
-            resourceGroupName: "teamStatus"
+            resourceGroupName: "data"
         }
 );

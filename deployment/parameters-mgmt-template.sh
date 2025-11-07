@@ -8,6 +8,7 @@ TEAM_AUDITOR_GROUP="team_auditor_group_name"
 TAGS="project=iam-identity-center-team environment=prod"
 CLOUDTRAIL_AUDIT_LOGS=read_write
 SECRET_NAME=TEAM-IDC-APP
+SETTINGS_TABLE_NAME="team-idc-settings-table"
 # Uncomment the next line only if you have a custom domain
 # UI_DOMAIN=portal.teamtest.online
 

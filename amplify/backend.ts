@@ -1,5 +1,7 @@
 import * as iam from "aws-cdk-lib/aws-iam"
+import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { StreamViewType } from "aws-cdk-lib/aws-dynamodb";
+import { DynamoEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { defineBackend } from '@aws-amplify/backend';
 import { auth } from './auth/resource';
 import { data } from './data/resource';
@@ -46,13 +48,20 @@ const backend = defineBackend({
   teamStatus,
 });
 
-backend.teamgetUserPolicy.addEnvironment('POLICY_TABLE_NAME', backend.data.resources.tables['Eligibility'].tableName);
-
 const { cfnResources } = backend.data.resources;
 
 cfnResources.amplifyDynamoDbTables["Requests"].streamSpecification = {
   streamViewType: StreamViewType.NEW_AND_OLD_IMAGES,
 
+};
+
+cfnResources.amplifyDynamoDbTables["Sessions"].timeToLiveAttribute = {
+  attributeName: "expireAt",
+  enabled: true,
+};
+
+cfnResources.amplifyDynamoDbTables["Sessions"].streamSpecification = {
+  streamViewType: StreamViewType.NEW_AND_OLD_IMAGES,
 };
 
 const userPool = backend.auth.resources.userPool;
@@ -71,6 +80,8 @@ const teamgetUsersLambda = backend.teamgetUsers.resources.lambda
 const teamListGroupsLambda = backend.teamListGroups.resources.lambda
 const teamPublishOUsLambda = backend.teamPublishOUs.resources.lambda
 const teamqueryLogsLambda = backend.teamqueryLogs.resources.lambda
+const teamStatusLambda = backend.teamStatus.resources.lambda
+const teamNotificationsLambda = backend.teamNotifications.resources.lambda
 
 const teamPreTokenGenerationHandlerPolicyStatement = new iam.PolicyStatement({
   actions: [
@@ -177,6 +188,21 @@ backend.auth.resources.cfnResources.cfnUserPool.lambdaConfig = {
 };
 
 backend.teamStatus.addEnvironment('API_TEAM_GRAPHQLAPIENDPOINTOUTPUT', backend.data.graphqlUrl);
+backend.teamgetLogs.addEnvironment('API_TEAM_GRAPHQLAPIENDPOINTOUTPUT', backend.data.graphqlUrl);
+backend.teamqueryLogs.addEnvironment('API_TEAM_GRAPHQLAPIENDPOINTOUTPUT', backend.data.graphqlUrl);
+backend.teamgetUserPolicy.addEnvironment('POLICY_TABLE_NAME', backend.data.resources.tables['Eligibility'].tableName);
+
+backend.data.resources.graphqlApi.grantQuery(teamStatusLambda)
+backend.data.resources.graphqlApi.grantMutation(teamStatusLambda)
+
+teamgetLogsLambda.addEventSource(new DynamoEventSource(backend.data.resources.tables['Sessions'], {
+  startingPosition: lambda.StartingPosition.LATEST,
+  batchSize: 10,
+  retryAttempts: 3,
+}));
+backend.data.resources.tables['Sessions'].grantStreamRead(teamgetLogsLambda);
+backend.data.resources.tables['Sessions'].grantWriteData(teamgetLogsLambda);
+backend.data.resources.graphqlApi.grantMutation(teamgetLogsLambda);
 
 // Get the environment name
 const env = backend.stack.node.tryGetContext('env') || 'dev';
@@ -188,13 +214,13 @@ const snsNotificationTopic = createSnsNotificationTopic(customResourceStack, env
 const stepFunctions = createStepFunctions(
   customResourceStack,
   env,
-  backend.teamStatus.resources.lambda.functionArn,
-  backend.teamNotifications.resources.lambda.functionArn
+  teamStatusLambda.functionArn,
+  teamNotificationsLambda.functionArn
 );
 
-createLambdaTeamRouter(customResourceStack, 
-  env, 
-  backend.data.resources.tables, 
+createLambdaTeamRouter(customResourceStack,
+  env,
+  backend.data.resources.tables,
   backend.auth.resources.userPool.userPoolId,
   stepFunctions.grantStateMachine.stateMachineArn,
   stepFunctions.revokeStateMachine.stateMachineArn,
@@ -202,8 +228,8 @@ createLambdaTeamRouter(customResourceStack,
   stepFunctions.scheduleStateMachine.stateMachineArn,
   stepFunctions.approvalStateMachine.stateMachineArn,
   snsNotificationTopic.topicArn,
-  process.env.IDC_LOGIN_URL || '',
-  backend.teamStatus.resources.lambda.functionArn,
-  backend.teamNotifications.resources.lambda.functionArn,
+  process.env.IDC_LOGIN_URL!,
+  teamStatusLambda.functionArn,
+  teamNotificationsLambda.functionArn,
   backend.data.graphqlUrl
 );
