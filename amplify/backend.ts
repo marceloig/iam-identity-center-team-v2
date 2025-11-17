@@ -157,7 +157,19 @@ const teamListGroupsPolicyStatement = new iam.PolicyStatement({
 const teamqueryLogsPolicyStatement = new iam.PolicyStatement({
   actions: [
     "identitystore:ListGroupMemberships",
-    "sso:ListInstances"
+    "sso:ListInstances",
+    "cloudtrail:DescribeQuery",
+    "cloudtrail:StartQuery",
+    "cloudtrail:GetQueryResults"
+  ],
+  resources: ["*"],
+})
+
+const teamNotificationsPolicyStatement = new iam.PolicyStatement({
+  actions: [
+    "ses:SendEmail",
+    "ses:SendRawEmail",
+    "sns:Publish"
   ],
   resources: ["*"],
 })
@@ -182,6 +194,7 @@ teamgetUsersLambda.addToRolePolicy(teamgetUsersPolicyStatement)
 teamListGroupsLambda.addToRolePolicy(teamListGroupsPolicyStatement)
 teamPublishOUsLambda.addToRolePolicy(organizationsPolicyStatement)
 teamqueryLogsLambda.addToRolePolicy(teamqueryLogsPolicyStatement)
+teamNotificationsLambda.addToRolePolicy(teamNotificationsPolicyStatement)
 
 backend.auth.resources.cfnResources.cfnUserPool.lambdaConfig = {
   preTokenGeneration: backend.preTokenGeneration.resources.lambda.functionArn,
@@ -200,6 +213,8 @@ teamgetLogsLambda.addEventSource(new DynamoEventSource(backend.data.resources.ta
   batchSize: 10,
   retryAttempts: 3,
 }));
+
+backend.data.resources.tables['Settings'].grantReadData(teamNotificationsLambda);
 backend.data.resources.tables['Sessions'].grantStreamRead(teamgetLogsLambda);
 backend.data.resources.tables['Sessions'].grantWriteData(teamgetLogsLambda);
 backend.data.resources.graphqlApi.grantMutation(teamgetLogsLambda);
@@ -208,7 +223,7 @@ backend.data.resources.graphqlApi.grantMutation(teamgetLogsLambda);
 const env = backend.stack.node.tryGetContext('env') || 'dev';
 const customResourceStack = backend.createStack('CustomResources');
 
-const snsNotificationTopic = createSnsNotificationTopic(customResourceStack, env);
+const snsNotificationTopic = createSnsNotificationTopic(customResourceStack);
 
 // Create Step Functions with Lambda ARNs
 const stepFunctions = createStepFunctions(

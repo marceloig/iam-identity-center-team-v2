@@ -223,7 +223,7 @@ function Logs(props) {
   }
 
   function updateEvent() {
-    const updateSub = client.models.Sessions.onCreate({
+    const updateSub = client.models.Sessions.onUpdate({
       filter: {
         id: { eq: props.item.id },
       },

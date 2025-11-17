@@ -7,7 +7,7 @@ import outputs from "../amplify_outputs.json";
 import Nav from "./components/Navigation/Nav";
 import home from "./media/Home.svg";
 import "./index.css";
-import { Button } from "@awsui/components-react";
+import { Button } from "@cloudscape-design/components";
 
 const { Header, Content } = Layout;
 

@@ -9,7 +9,7 @@ else
   export AWS_PROFILE=$TEAM_ACCOUNT_PROFILE
 fi
 
-cognitoUserpoolId=$(aws cognito-idp list-user-pools --region $REGION --max-results 10 --output json | jq -r '.UserPools[] | select(.Name | contains("team06dbb7fc")) | .Id')
+cognitoUserpoolId=$USER_POOL_ID
 cognitoUserpoolDomain=$(aws cognito-idp describe-user-pool --region $REGION --user-pool-id $cognitoUserpoolId --output json | jq -r '.UserPool.Domain')
 cognitoUserpoolClientId=$(aws cognito-idp list-user-pool-clients --region $REGION --user-pool-id $cognitoUserpoolId --output json | jq -r '.UserPoolClients[] | select(.ClientName | contains("machine_auth")) | .ClientId')
 cognitoUserpoolClient=$(aws cognito-idp describe-user-pool-client --region $REGION --user-pool-id $cognitoUserpoolId --client-id $cognitoUserpoolClientId --output json | jq -r '.UserPoolClient')

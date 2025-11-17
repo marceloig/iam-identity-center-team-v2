@@ -8,7 +8,7 @@ else
   export AWS_PROFILE=$TEAM_ACCOUNT_PROFILE
 fi
 
-cognitoUserpoolId=`aws cognito-idp list-user-pools --region $REGION --max-results 10 --output json | jq -r '.UserPools[] | select(.Name | contains("team06dbb7fc")) | .Id'`
+cognitoUserpoolId=$USER_POOL_ID
 
 # remove pager
 export AWS_PAGER=""

@@ -27,5 +27,7 @@ export const teamNotifications = defineFunction(
                     },
                 },
             }),
-        }),
+        }), {
+    resourceGroupName: "data"
+}
 );

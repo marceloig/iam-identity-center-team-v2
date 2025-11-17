@@ -290,6 +290,7 @@ const schema = a.schema({
 
   getLogs: a
     .query()
+    .arguments({ queryId: a.string()})
     .returns(a.ref('Logs').array())
     .handler(a.handler.function(teamqueryLogs))
     .authorization((allow) => [allow.authenticated()]),

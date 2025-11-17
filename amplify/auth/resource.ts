@@ -10,9 +10,9 @@ export const auth = defineAuth({
     email: true,
     externalProviders: {
       callbackUrls: [
-        'http://localhost:5173/',
+        process.env.CALLBACK_URL!,
       ],
-      logoutUrls: ['http://localhost:5173/'],
+      logoutUrls: [process.env.CALLBACK_URL!],
     }
   },
   triggers: {
