@@ -87,7 +87,7 @@ const schema = a.schema({
     ])
     .authorization((allow) => [
       allow.group('Auditors').to(['read']),
-      allow.owner().to(['update', 'read']),
+      allow.owner().to(['create', 'read']),
       allow.authenticated(),
     ]),
 
