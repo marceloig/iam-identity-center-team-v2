@@ -56,6 +56,8 @@ jobs:
       # Explicitly include upload-artifact action before it's needed
       - name: Setup upload-artifact
         uses: actions/upload-artifact@v4
+        with:
+          path: "docs/_site/"
       
       - name: Upload artifact
         # Automatically uploads an artifact from the './_site' directory by default
