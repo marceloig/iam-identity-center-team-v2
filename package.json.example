@@ -1,0 +1,16 @@
+{
+  "scripts": {
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest --watch",
+    "test:components": "vitest run src/tests/components",
+    "test:services": "vitest run src/tests/services",
+    "test:graphql": "vitest run src/tests/graphql",
+    "test:integration": "vitest run src/tests/integration",
+    "test:unit": "vitest run --exclude src/tests/integration/**",
+    "test:changed": "vitest related",
+    "test:debug": "vitest --inspect-brk --inspect --single-thread"
+  }
+}
