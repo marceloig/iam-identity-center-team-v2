@@ -204,6 +204,7 @@ backend.teamStatus.addEnvironment('API_TEAM_GRAPHQLAPIENDPOINTOUTPUT', backend.d
 backend.teamgetLogs.addEnvironment('API_TEAM_GRAPHQLAPIENDPOINTOUTPUT', backend.data.graphqlUrl);
 backend.teamqueryLogs.addEnvironment('API_TEAM_GRAPHQLAPIENDPOINTOUTPUT', backend.data.graphqlUrl);
 backend.teamgetUserPolicy.addEnvironment('POLICY_TABLE_NAME', backend.data.resources.tables['Eligibility'].tableName);
+backend.teamNotifications.addEnvironment('SETTINGS_TABLE_NAME', backend.data.resources.tables['Settings'].tableName);
 
 backend.data.resources.graphqlApi.grantQuery(teamStatusLambda)
 backend.data.resources.graphqlApi.grantMutation(teamStatusLambda)
