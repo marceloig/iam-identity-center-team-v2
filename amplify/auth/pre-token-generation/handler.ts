@@ -1,17 +1,26 @@
 import type { PreTokenGenerationTriggerHandler } from "aws-lambda";
 
 import { DynamoDBClient, GetItemCommand } from "@aws-sdk/client-dynamodb";
+import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
 import { SSOAdminClient, ListInstancesCommand } from "@aws-sdk/client-sso-admin";
 import { IdentitystoreClient, GetUserIdCommand, GetGroupIdCommand, ListGroupMembershipsForMemberCommand } from "@aws-sdk/client-identitystore";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
-//import { env } from '$amplify/env/pre-token-generation'; // the import is '$amplify/env/<function-name>'
 
-const settingsTableName = process.env.SETTINGS_TABLE_NAME;
 const dynamodb = new DynamoDBClient({});
+const ssm = new SSMClient({});
 const ssoAdmin = new SSOAdminClient({});
 const identitystore = new IdentitystoreClient({});
 
+async function getSettingsTableName() {
+    const paramName = process.env.SSM_SETTINGS_TABLE_NAME;
+    if (!paramName) throw new Error("SSM_SETTINGS_TABLE_NAME not set");
+    const command = new GetParameterCommand({ Name: paramName });
+    const response = await ssm.send(command);
+    return response.Parameter?.Value || "";
+}
+
 async function getSettings() {
+    const settingsTableName = await getSettingsTableName();
     const command = new GetItemCommand({
         TableName: settingsTableName,
         Key: {

@@ -9,6 +9,13 @@ export const auth = defineAuth({
   loginWith: {
     email: true,
     externalProviders: {
+      saml: {
+        name: 'IDC',
+        metadata: {
+          metadataContent: process.env.SAML_METADATA_URL || 'https://portal.sso.us-east-1.amazonaws.com',
+          metadataType: 'URL',
+        },
+      }, 
       callbackUrls: [
         process.env.CALLBACK_URL || 'http://localhost:5173',
       ],

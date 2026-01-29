@@ -6,6 +6,7 @@ export const preTokenGeneration = defineFunction({
     TEAM_ADMIN_GROUP: process.env.TEAM_ADMIN_GROUP || '',
     TEAM_AUDITOR_GROUP: process.env.TEAM_AUDITOR_GROUP || '',
     SETTINGS_TABLE_NAME: process.env.SETTINGS_TABLE_NAME || '', // Will be set in pos deployment script
+    SSM_SETTINGS_TABLE_NAME: '', // Will be set by execution backend.ts
   },
   resourceGroupName: 'auth',
 });

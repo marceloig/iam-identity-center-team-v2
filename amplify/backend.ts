@@ -2,6 +2,7 @@ import * as iam from "aws-cdk-lib/aws-iam"
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { StreamViewType } from "aws-cdk-lib/aws-dynamodb";
 import { DynamoEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
+import { StringParameter } from 'aws-cdk-lib/aws-ssm';
 import { defineBackend } from '@aws-amplify/backend';
 import { auth } from './auth/resource';
 import { data } from './data/resource';
@@ -50,6 +51,8 @@ const backend = defineBackend({
 
 const { cfnResources } = backend.data.resources;
 
+const SSM_SETTINGS_TABLE_NAME = `/${backend.stack.stackName}/table/Settings/name`
+
 cfnResources.amplifyDynamoDbTables["Requests"].streamSpecification = {
   streamViewType: StreamViewType.NEW_AND_OLD_IMAGES,
 
@@ -93,7 +96,8 @@ const teamPreTokenGenerationHandlerPolicyStatement = new iam.PolicyStatement({
     "sso:ListInstances",
     "dynamodb:GetItem",
     "dynamodb:Query",
-    "dynamodb:Scan"
+    "dynamodb:Scan",
+    "ssm:GetParameter",
   ],
   resources: ["*"],
 })
@@ -204,7 +208,7 @@ backend.teamStatus.addEnvironment('API_TEAM_GRAPHQLAPIENDPOINTOUTPUT', backend.d
 backend.teamgetLogs.addEnvironment('API_TEAM_GRAPHQLAPIENDPOINTOUTPUT', backend.data.graphqlUrl);
 backend.teamqueryLogs.addEnvironment('API_TEAM_GRAPHQLAPIENDPOINTOUTPUT', backend.data.graphqlUrl);
 backend.teamgetUserPolicy.addEnvironment('POLICY_TABLE_NAME', backend.data.resources.tables['Eligibility'].tableName);
-backend.teamNotifications.addEnvironment('SETTINGS_TABLE_NAME', backend.data.resources.tables['Settings'].tableName);
+backend.preTokenGeneration.addEnvironment('SSM_SETTINGS_TABLE_NAME', SSM_SETTINGS_TABLE_NAME);
 
 backend.data.resources.graphqlApi.grantQuery(teamStatusLambda)
 backend.data.resources.graphqlApi.grantMutation(teamStatusLambda)
@@ -219,6 +223,12 @@ backend.data.resources.tables['Settings'].grantReadData(teamNotificationsLambda)
 backend.data.resources.tables['Sessions'].grantStreamRead(teamgetLogsLambda);
 backend.data.resources.tables['Sessions'].grantWriteData(teamgetLogsLambda);
 backend.data.resources.graphqlApi.grantMutation(teamgetLogsLambda);
+
+// Create SSM Parameter for Settings table name
+new StringParameter(backend.stack, 'SettingsTableNameParameter', {
+  parameterName: SSM_SETTINGS_TABLE_NAME,
+  stringValue: backend.data.resources.tables['Settings'].tableName,
+});
 
 // Get the environment name
 const env = backend.stack.node.tryGetContext('env') || 'dev';
