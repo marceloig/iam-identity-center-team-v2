@@ -58,6 +58,8 @@
     "@aws-sdk/client-identitystore": "^3.911.0",
     "@aws-sdk/client-sso-admin": "^3.911.0",
     "@aws-sdk/util-dynamodb": "^3.911.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.978.0",
+    "@aws-sdk/client-amplify": "^3.978.0",
     "@awsui/collection-hooks": "^1.0.21",
     "@awsui/components-react": "^3.0.1683",
     "@awsui/global-styles": "^1.0.25",
@@ -79,5 +81,6 @@
     "react-router-dom": "^5.2.0",
     "sass": "^1.45.1",
     "web-vitals": "^1.1.1"
+
   }
 }

@@ -6,6 +6,15 @@ import boto3
 from datetime import datetime, timezone
 from dateutil import parser, tz
 
+def get_settings_table_name():
+    ssm = boto3.client('ssm')
+    parameter_name = os.getenv('SSM_SETTINGS_TABLE_NAME')
+    try:
+        response = ssm.get_parameter(Name=parameter_name)
+        return response['Parameter']['Value']
+    except Exception:
+        return os.getenv("SETTINGS_TABLE_NAME")
+
 session = boto3.Session()
 
 
@@ -87,7 +96,7 @@ def send_slack_notifications(
 ):
     try:
         dynamodb = session.resource("dynamodb")
-        settings_table_name = os.getenv("SETTINGS_TABLE_NAME")
+        settings_table_name = get_settings_table_name()
         settings_table = dynamodb.Table(settings_table_name)
         settings = settings_table.get_item(Key={"id": "settings"})
         item_settings = settings.get("Item", {})

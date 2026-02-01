@@ -26,6 +26,7 @@ import { teamStatus } from './functions/teamStatus/resource';
 import { createSnsNotificationTopic } from './custom/sns/resource';
 import { createStepFunctions } from './custom/stepfunctions/resource';
 import { createLambdaTeamRouter } from './custom/functions/teamRouter/resource';
+import { createTrigger } from './custom/triggers/integration/resource';
 
 const backend = defineBackend({
   auth,
@@ -209,6 +210,7 @@ backend.teamgetLogs.addEnvironment('API_TEAM_GRAPHQLAPIENDPOINTOUTPUT', backend.
 backend.teamqueryLogs.addEnvironment('API_TEAM_GRAPHQLAPIENDPOINTOUTPUT', backend.data.graphqlUrl);
 backend.teamgetUserPolicy.addEnvironment('POLICY_TABLE_NAME', backend.data.resources.tables['Eligibility'].tableName);
 backend.preTokenGeneration.addEnvironment('SSM_SETTINGS_TABLE_NAME', SSM_SETTINGS_TABLE_NAME);
+backend.teamNotifications.addEnvironment('SSM_SETTINGS_TABLE_NAME', SSM_SETTINGS_TABLE_NAME);
 
 backend.data.resources.graphqlApi.grantQuery(teamStatusLambda)
 backend.data.resources.graphqlApi.grantMutation(teamStatusLambda)
@@ -259,3 +261,11 @@ createLambdaTeamRouter(customResourceStack,
   teamNotificationsLambda.functionArn,
   backend.data.graphqlUrl
 );
+
+if (process.env.SAML_METADATA_URL) {
+  console.log('SAML_METADATA_URL set. Initiating integration trigger creation.');
+  createTrigger(backend.stack, backend.auth.resources.userPool.userPoolId);
+}else {
+  console.log('SAML_METADATA_URL not set. Skipping integration trigger creation.');
+  console.log('To finalize the integration with IAM Identity Center, please set the SAML_METADATA_URL environment variable in the parameters.sh file and redeploy.');
+}
