@@ -1,4 +1,4 @@
-import { CognitoIdentityProviderClient, DescribeUserPoolCommand, ListUserPoolClientsCommand, CreateIdentityProviderCommand, UpdateUserPoolClientCommand } from '@aws-sdk/client-cognito-identity-provider';
+import { CognitoIdentityProviderClient, DescribeUserPoolCommand, ListUserPoolClientsCommand, CreateIdentityProviderCommand, UpdateIdentityProviderCommand, UpdateUserPoolClientCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { AmplifyClient, ListAppsCommand, ListDomainAssociationsCommand } from '@aws-sdk/client-amplify';
 
 const USER_POOL_ID = process.env.USER_POOL_ID!;
@@ -10,11 +10,11 @@ const amplifyClient = new AmplifyClient();
 export const handler = async () => {
   try {
     const { userPoolDomain, clientId } = await getCognitoConfig();
-    const amplifyDomain = await getAmplifyDomain();
+    const callbackUrl = await getCallbackUrl();
     
-    await configureIdentityProvider(clientId, amplifyDomain);
+    await configureIdentityProvider(clientId, callbackUrl);
     
-    const integrationUrls = getIntegrationUrls(userPoolDomain, clientId, amplifyDomain);
+    const integrationUrls = getIntegrationUrls(userPoolDomain, clientId, callbackUrl);
     console.log('Integration URLs:', integrationUrls);  
     
     return { statusCode: 200, body: integrationUrls };
@@ -33,7 +33,7 @@ async function getCognitoConfig() {
     new ListUserPoolClientsCommand({ UserPoolId: USER_POOL_ID })
   );
   
-  const client = UserPoolClients?.find(c => c.ClientName?.includes('amplifyAuthUserPoolAppClient'));
+  const client = UserPoolClients?.find((c: any) => c.ClientName?.includes('amplifyAuthUserPoolAppClient'));
   
   return {
     userPoolDomain: UserPool?.Domain!,
@@ -41,7 +41,7 @@ async function getCognitoConfig() {
   };
 }
 
-async function getAmplifyDomain() {
+async function getCallbackUrl() {
   if(CALLBACK_URL) {
     return CALLBACK_URL;
   }
@@ -62,31 +62,48 @@ async function getAmplifyDomain() {
     return prefix ? `${prefix}.${domain.domainName}` : domain.domainName!;
   }
   
-  return `main.${app.defaultDomain}`;
+  return `https://main.${app.defaultDomain}/`;
 }
 
-async function configureIdentityProvider(clientId: string, amplifyDomain: string) {
-  const callbackUrl = `https://${amplifyDomain}/`;
-  
-  await cognitoClient.send(
-    new CreateIdentityProviderCommand({
-      UserPoolId: USER_POOL_ID,
-      ProviderName: 'IDC',
-      ProviderType: 'SAML',
-      ProviderDetails: {
-        MetadataURL: process.env.SAML_METADATA_URL || '',
-      },
-      AttributeMapping: { email: 'Email' },
-      IdpIdentifiers: ['team']
-    })
-  ).catch(e => console.log('Identity provider may already exist:', e.message));
+async function configureIdentityProvider(clientId: string, callbackUrl: string) {
+  try {
+    await cognitoClient.send(
+      new CreateIdentityProviderCommand({
+        UserPoolId: USER_POOL_ID,
+        ProviderName: `IDC`,
+        ProviderType: 'SAML',
+        ProviderDetails: {
+          MetadataURL: process.env.SAML_METADATA_URL || '',
+        },
+        AttributeMapping: { email: 'Email' },
+        IdpIdentifiers: ['team']
+      })
+    );
+  } catch (e: any) {
+    if (e.name === 'DuplicateProviderException') {
+      await cognitoClient.send(
+        new UpdateIdentityProviderCommand({
+          UserPoolId: USER_POOL_ID,
+          ProviderName: `IDC`,
+          ProviderDetails: {
+            MetadataURL: process.env.SAML_METADATA_URL || '',
+          },
+          AttributeMapping: { email: 'Email' },
+          IdpIdentifiers: ['team']
+        })
+      );
+    } else {
+      console.error('Error configuring identity provider:', e);
+      throw e;
+    }
+  }
   
   await cognitoClient.send(
     new UpdateUserPoolClientCommand({
       UserPoolId: USER_POOL_ID,
       ClientId: clientId,
       RefreshTokenValidity: 1,
-      SupportedIdentityProviders: ['IDC'],
+      SupportedIdentityProviders: [`IDC`],
       AllowedOAuthFlows: ['code'],
       AllowedOAuthScopes: ['phone', 'email', 'openid', 'profile', 'aws.cognito.signin.user.admin'],
       LogoutURLs: [callbackUrl],
@@ -96,11 +113,11 @@ async function configureIdentityProvider(clientId: string, amplifyDomain: string
   );
 }
 
-function getIntegrationUrls(userPoolDomain: string, clientId: string, amplifyDomain: string) {
+function getIntegrationUrls(userPoolDomain: string, clientId: string, callbackUrl: string) {
   const hostedUiDomain = `${userPoolDomain}.auth.${process.env.AWS_REGION}.amazoncognito.com`;
   
   return {
-    applicationStartURL: `https://${hostedUiDomain}/authorize?client_id=${clientId}&response_type=code&scope=aws.cognito.signin.user.admin+email+openid+phone+profile&redirect_uri=https://${amplifyDomain}/&idp_identifier=team`,
+    applicationStartURL: `https://${hostedUiDomain}/authorize?client_id=${clientId}&response_type=code&scope=aws.cognito.signin.user.admin+email+openid+phone+profile&redirect_uri=${callbackUrl}&idp_identifier=team`,
     applicationACSURL: `https://${hostedUiDomain}/saml2/idpresponse`,
     applicationSAMLAudience: `urn:amazon:cognito:sp:${USER_POOL_ID}`
   };
