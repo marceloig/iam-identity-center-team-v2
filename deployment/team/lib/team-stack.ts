@@ -81,7 +81,7 @@ export class TeamStack extends cdk.Stack {
         { name: 'TEAM_ACCOUNT', value: this.node.tryGetContext('teamAccount') },
         { name: 'CLOUDTRAIL_AUDIT_LOGS', value: this.node.tryGetContext('cloudTrailAuditLogs') },
         { name: 'TEAM_ADMIN_GROUP', value: this.node.tryGetContext('teamAdminGroup')},
-        { name: 'TEAM_AUDITOR_GROUP', value: this.node.tryGetContext('teamAuditGroup')},
+        { name: 'TEAM_AUDITOR_GROUP', value: this.node.tryGetContext('teamAuditorGroup')},
         { name: 'TAGS', value: this.node.tryGetContext('teamTags') },
         { name: 'AMPLIFY_CUSTOM_DOMAIN', value: this.node.tryGetContext('customAmplifyDomain')},
       ],

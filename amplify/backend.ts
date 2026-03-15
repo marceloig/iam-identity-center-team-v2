@@ -1,5 +1,6 @@
 import * as iam from "aws-cdk-lib/aws-iam"
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
 import { StreamViewType } from "aws-cdk-lib/aws-dynamodb";
 import { DynamoEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { StringParameter } from 'aws-cdk-lib/aws-ssm';
@@ -269,3 +270,34 @@ if (process.env.SAML_METADATA_URL) {
   console.log('SAML_METADATA_URL not set. Skipping integration trigger creation.');
   console.log('To finalize the integration with IAM Identity Center, please set the SAML_METADATA_URL environment variable in the parameters.sh file and redeploy.');
 }
+
+// ============================================================
+// Machine Auth (M2M) - Resource Server + Client Credentials
+// Replaces: deployment/api-machine-auth.sh
+// ============================================================
+
+const adminScope = new cognito.ResourceServerScope({
+  scopeName: 'admin',
+  scopeDescription: 'Provides Admin access to machine authentication flows',
+});
+
+const apiResourceServer = userPool.addResourceServer('ApiResourceServer', {
+  identifier: 'api',
+  userPoolResourceServerName: 'api',
+  scopes: [adminScope],
+});
+
+const machineAuthClient = userPool.addClient('MachineAuthClient', {
+  userPoolClientName: 'machine_auth',
+  generateSecret: true,
+  authFlows: { custom: false, userSrp: false, userPassword: false },
+  supportedIdentityProviders: [cognito.UserPoolClientIdentityProvider.COGNITO],
+  oAuth: {
+    flows: { clientCredentials: true },
+    scopes: [cognito.OAuthScope.resourceServer(apiResourceServer, adminScope)],
+    callbackUrls: ['https://localhost'],
+  },
+});
+
+// Ensure the resource server is created before the client
+machineAuthClient.node.addDependency(apiResourceServer);
