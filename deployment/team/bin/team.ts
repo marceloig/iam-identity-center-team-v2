@@ -10,6 +10,7 @@ app.node.setContext('teamAuditorGroup', process.env.TEAM_AUDITOR_GROUP );
 app.node.setContext('teamAccount', process.env.TEAM_ACCOUNT);
 app.node.setContext('customAmplifyDomain', process.env.CUSTOM_AMPLIFY_DOMAIN || "");
 app.node.setContext('customRepositorySecretName', process.env.SECRET_NAME || "");
+app.node.setContext('samlMetadataUrl', process.env.SAML_METADATA_URL || "");
 app.node.setContext('teamTags', process.env.TAGS);
 
 new TeamStack(app, 'TeamStack', {

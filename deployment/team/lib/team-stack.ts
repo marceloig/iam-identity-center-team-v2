@@ -9,13 +9,7 @@ export class TeamStack extends cdk.Stack {
 
     // Amplify Service Role
     const amplifyRole = new iam.Role(this, 'AmplifyRole', {
-      assumedBy: new iam.CompositePrincipal(
-        new iam.ServicePrincipal('amplify.amazonaws.com')
-      ).withConditions({
-        StringEquals: {
-          'aws:SourceAccount': this.account
-        }
-      }),
+      assumedBy: new iam.ServicePrincipal('amplify.amazonaws.com'),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess')
       ]
@@ -84,6 +78,7 @@ export class TeamStack extends cdk.Stack {
         { name: 'TEAM_AUDITOR_GROUP', value: this.node.tryGetContext('teamAuditorGroup')},
         { name: 'TAGS', value: this.node.tryGetContext('teamTags') },
         { name: 'AMPLIFY_CUSTOM_DOMAIN', value: this.node.tryGetContext('customAmplifyDomain')},
+        { name: 'SAML_METADATA_URL', value: this.node.tryGetContext('samlMetadataUrl')},
       ],
       tags: [{ key: 'Branch', value: 'main' }]
     });
