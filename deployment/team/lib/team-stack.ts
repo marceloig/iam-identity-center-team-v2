@@ -11,6 +11,7 @@ export class TeamStack extends cdk.Stack {
     const amplifyRole = new iam.Role(this, 'AmplifyRole', {
       assumedBy: new iam.ServicePrincipal('amplify.amazonaws.com'),
       managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess-Amplify'),
         iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess')
       ]
     });
