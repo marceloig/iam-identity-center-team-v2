@@ -9,7 +9,7 @@ export SECRET_NAME=TEAM-IDC-APP
 export USER_POOL_ID="us-east-1_xxxxxx"
 export SETTINGS_TABLE_NAME="team-idc-settings-table"
 export CALLBACK_URL="http://localhost:5173/"
-export SAML_METADATA_URL="https://portal.sso.us-east-1.amazonaws.com/saml/metadata/XXXXXXX"
+#export SAML_METADATA_URL="https://portal.sso.us-east-1.amazonaws.com/saml/metadata/XXXXXXX"
 # Uncomment the next line only if you have a custom domain
 # UI_DOMAIN=portal.teamtest.online
 

@@ -12,6 +12,7 @@ export function createTrigger(stack: Stack, userPoolId: string) {
     environment: {
       USER_POOL_ID: userPoolId,
       CALLBACK_URL: process.env.CALLBACK_URL || '',
+      SAML_METADATA_URL: process.env.SAML_METADATA_URL || '',
     },
   });
 

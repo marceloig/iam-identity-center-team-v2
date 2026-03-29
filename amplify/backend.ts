@@ -263,12 +263,12 @@ createLambdaTeamRouter(customResourceStack,
   backend.data.graphqlUrl
 );
 
-if (process.env.SAML_METADATA_URL) {
-  console.log('SAML_METADATA_URL set. Initiating integration trigger creation.');
+if (process.env.USER_POOL_ID) {
+  console.log('USER_POOL_ID set. Initiating integration trigger creation.');
   createTrigger(backend.stack, backend.auth.resources.userPool.userPoolId);
 }else {
-  console.log('SAML_METADATA_URL not set. Skipping integration trigger creation.');
-  console.log('To finalize the integration with IAM Identity Center, please set the SAML_METADATA_URL environment variable in the parameters.sh file and redeploy.');
+  console.log('USER_POOL_ID not set. Skipping integration trigger creation.');
+  console.log('To finalize the integration with IAM Identity Center, please set the USER_POOL_ID environment variable in the parameters.sh file and redeploy.');
 }
 
 // ============================================================
