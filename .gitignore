@@ -64,3 +64,5 @@ amplify-gradle-config.json
 amplifytools.xcconfig
 .secret-*
 **.sample
+
+parameters.sh
