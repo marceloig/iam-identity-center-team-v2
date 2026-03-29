@@ -37,31 +37,31 @@ export class TeamStack extends cdk.Stack {
         { name: 'AMPLIFY_DESTRUCTIVE_UPDATES', value: 'true' },
         { name: '_LIVE_UPDATES', value: '[{"name":"Node.js version","pkg":"node","type":"nvm","version":"22.17"}]' }
       ],
-      buildSpec: [
-        'version: 1',
-        'backend:',
-        '  phases:',
-        '    build:',
-        '      commands:',
-        '        - rm -rf node_modules package-lock.json',
-        '        - npm install',
-        '        - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID',
-        'frontend:',
-        '  phases:',
-        '    preBuild:',
-        '      commands:',
-        '        - npm install',
-        '    build:',
-        '      commands:',
-        '        - npm run build',
-        '  artifacts:',
-        '    baseDirectory: dist',
-        '    files:',
-        '      - "**/*"',
-        '  cache:',
-        '    paths:',
-        '      - node_modules/**/*',
-      ].join('\n'),
+      buildSpec: `
+      version: 1
+      backend:
+        phases:
+          build:
+            commands:
+              - rm -rf node_modules package-lock.json
+              - npm install
+              - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
+      frontend:
+        phases:
+          preBuild:
+            commands:
+              - npm install
+          build:
+            commands:
+              - npm run build
+        artifacts:
+          baseDirectory: dist
+          files:
+            - "**/*"
+        cache:
+          paths:
+            - node_modules/**/*
+      `,
       tags: [{ key: 'Name', value: 'TEAM' }],
       iamServiceRole: amplifyRole.roleArn,
       platform: 'WEB'
