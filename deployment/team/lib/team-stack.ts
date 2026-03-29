@@ -55,7 +55,7 @@ export class TeamStack extends cdk.Stack {
             commands:
               - npm run build
         artifacts:
-          baseDirectory: build
+          baseDirectory: dist
           files:
             - '**/*'
         cache:
@@ -63,7 +63,7 @@ export class TeamStack extends cdk.Stack {
             - node_modules/**/*`,
       tags: [{ key: 'Name', value: 'TEAM' }],
       iamServiceRole: amplifyRole.roleArn,
-      platform: 'WEB_COMPUTE'
+      platform: 'WEB'
     });
 
     // Amplify Branch
