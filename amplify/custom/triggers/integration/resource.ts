@@ -20,6 +20,11 @@ export function createTrigger(stack: Stack, userPoolId: string) {
     resources: [`arn:aws:cognito-idp:${stack.region}:${stack.account}:userpool/${userPoolId}`],
   }));
 
+  triggerFunction.addToRolePolicy(new PolicyStatement({
+    actions: ['amplify:ListApps', 'amplify:ListDomainAssociations'],
+    resources: [`arn:aws:amplify:${stack.region}:${stack.account}:apps/*`],
+  }));
+
   new Trigger(stack, 'IntegrationTrigger', {
     handler: triggerFunction,
     executeAfter: [stack],
