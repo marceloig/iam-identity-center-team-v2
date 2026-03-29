@@ -10,6 +10,7 @@ export CLOUDTRAIL_AUDIT_LOGS=arn:aws:cloudtrail:us-east-1:123456789101:eventdata
 export SECRET_NAME=TEAM-IDC-APP
 export CALLBACK_URL="http://localhost:5173/"
 export SAML_METADATA_URL="https://portal.sso.us-east-1.amazonaws.com/saml/metadata/XXXXXXX"
+export IS_DEPLOYED=false
 #export USER_POOL_ID="us-east-1_xxxxxx"
 
 # Uncomment the next line only if you have a custom domain

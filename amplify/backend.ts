@@ -263,12 +263,12 @@ createLambdaTeamRouter(customResourceStack,
   backend.data.graphqlUrl
 );
 
-if (process.env.USER_POOL_ID) {
-  console.log('USER_POOL_ID set. Initiating integration trigger creation.');
+if (process.env.IS_DEPLOYED && process.env.IS_DEPLOYED.toLowerCase() === "true") {
+  console.log('IS_DEPLOYED set and true. Initiating integration trigger creation.');
   createTrigger(backend.stack, backend.auth.resources.userPool.userPoolId);
 }else {
-  console.log('USER_POOL_ID not set. Skipping integration trigger creation.');
-  console.log('To finalize the integration with IAM Identity Center, please set the USER_POOL_ID environment variable in the parameters.sh file and redeploy.');
+  console.log('IS_DEPLOYED not set or not true. Skipping integration trigger creation.');
+  console.log('To finalize the integration with IAM Identity Center, please set the IS_DEPLOYED environment variable in the parameters.sh file and redeploy.');
 }
 
 // ============================================================

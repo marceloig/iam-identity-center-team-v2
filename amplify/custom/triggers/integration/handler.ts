@@ -7,7 +7,15 @@ const CALLBACK_URL = process.env.CALLBACK_URL;
 const cognitoClient = new CognitoIdentityProviderClient();
 const amplifyClient = new AmplifyClient();
 
-export const handler = async () => {
+export const handler = async (event: any) => {
+  const requestType = event.RequestType;
+  console.log('Custom resource event:', requestType);
+
+  // Nothing to clean up on delete
+  if (requestType === 'Delete') {
+    return { Data: {} };
+  }
+
   try {
     const { userPoolDomain, clientId } = await getCognitoConfig();
     const callbackUrl = await getCallbackUrl();
@@ -17,7 +25,7 @@ export const handler = async () => {
     const integrationUrls = getIntegrationUrls(userPoolDomain, clientId, callbackUrl);
     console.log('Integration URLs:', integrationUrls);  
     
-    return { statusCode: 200, body: integrationUrls };
+    return { Data: integrationUrls };
   } catch (error) {
     console.error('Deployment trigger failed:', error);
     throw error;
