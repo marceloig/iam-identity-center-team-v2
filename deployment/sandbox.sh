@@ -11,4 +11,4 @@ fi
 
 cd ..
 
-npx ampx sandbox
+npx ampx sandbox --identifier sandbox
