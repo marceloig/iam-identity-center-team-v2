@@ -4,7 +4,7 @@ import { TeamStack } from '../lib/team-stack';
 
 const app = new cdk.App();
 app.node.setContext('login', process.env.IDC_LOGIN_URL);
-app.node.setContext('cloudTrailAuditLogs', process.env.CLOUDTRAIL_AUDIT_LOGS);
+app.node.setContext('cwLogGroupName', process.env.CW_LOG_GROUP_NAME);
 app.node.setContext('teamAdminGroup', process.env.TEAM_ADMIN_GROUP);
 app.node.setContext('teamAuditorGroup', process.env.TEAM_AUDITOR_GROUP );
 app.node.setContext('teamAccount', process.env.TEAM_ACCOUNT);

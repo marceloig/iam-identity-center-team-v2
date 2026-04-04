@@ -16,7 +16,7 @@ export const teamgetLogs = defineFunction(
             timeout: Duration.seconds(20),
             environment: {
                 REGION: process.env.REGION!,
-                EVENT_DATA_STORE: process.env.CLOUDTRAIL_AUDIT_LOGS!,
+                CW_LOG_GROUP_NAME: process.env.CW_LOG_GROUP_NAME!,
                 API_TEAM_GRAPHQLAPIENDPOINTOUTPUT: "localhost",
             },
         }),{

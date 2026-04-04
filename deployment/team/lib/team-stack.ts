@@ -75,7 +75,7 @@ export class TeamStack extends cdk.Stack {
       environmentVariables: [
         { name: 'SSO_LOGIN', value: this.node.tryGetContext('login') },
         { name: 'TEAM_ACCOUNT', value: this.node.tryGetContext('teamAccount') },
-        { name: 'CLOUDTRAIL_AUDIT_LOGS', value: this.node.tryGetContext('cloudTrailAuditLogs') },
+        { name: 'CW_LOG_GROUP_NAME', value: this.node.tryGetContext('cwLogGroupName') },
         { name: 'TEAM_ADMIN_GROUP', value: this.node.tryGetContext('teamAdminGroup')},
         { name: 'TEAM_AUDITOR_GROUP', value: this.node.tryGetContext('teamAuditorGroup')},
         { name: 'TAGS', value: this.node.tryGetContext('teamTags') },

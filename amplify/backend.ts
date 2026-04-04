@@ -122,9 +122,9 @@ const teamgetIdCGroupsPolicyStatement = new iam.PolicyStatement({
 
 const teamgetLogsPolicyStatement = new iam.PolicyStatement({
   actions: [
-    "cloudtrail:DescribeQuery",
-    "cloudtrail:StartQuery",
-    "cloudtrail:GetQueryResults"
+    "logs:StartQuery",
+    "logs:GetQueryResults",
+    "logs:StopQuery"
   ],
   resources: ["*"],
 })
@@ -164,9 +164,7 @@ const teamqueryLogsPolicyStatement = new iam.PolicyStatement({
   actions: [
     "identitystore:ListGroupMemberships",
     "sso:ListInstances",
-    "cloudtrail:DescribeQuery",
-    "cloudtrail:StartQuery",
-    "cloudtrail:GetQueryResults"
+    "logs:GetQueryResults"
   ],
   resources: ["*"],
 })

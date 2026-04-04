@@ -17,7 +17,6 @@ export const teamqueryLogs = defineFunction(
             environment: {
                 API_TEAM_GRAPHQLAPIENDPOINTOUTPUT: "localhost",
                 REGION: process.env.REGION!,
-                EVENT_DATA_STORE: process.env.CLOUDTRAIL_AUDIT_LOGS!,
             },
         }),{
             resourceGroupName: "data"

@@ -6,7 +6,7 @@ export TEAM_ACCOUNT_PROFILE=team_account_profile
 export TEAM_ADMIN_GROUP="team_admin_group_name"
 export TEAM_AUDITOR_GROUP="team_auditor_group_name"
 export TAGS="project=iam-identity-center-team environment=prod"
-export CLOUDTRAIL_AUDIT_LOGS=arn:aws:cloudtrail:us-east-1:123456789101:eventdatastore/xxxxxxx-xxxx-xxxx-xxx-xxxxxxxx
+export CW_LOG_GROUP_NAME="aws-cloudtrail-logs"
 export SECRET_NAME=TEAM-IDC-APP
 export CALLBACK_URL="http://localhost:5173/"
 export SAML_METADATA_URL="https://portal.sso.us-east-1.amazonaws.com/saml/metadata/XXXXXXX"

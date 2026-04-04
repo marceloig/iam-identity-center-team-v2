@@ -16,23 +16,17 @@ import { HttpRequest } from '@aws-sdk/protocol-http';
 import { default as fetch, Request } from 'node-fetch';
 
 import {
-  CloudTrailClient,
+  CloudWatchLogsClient,
   StartQueryCommand,
-  DescribeQueryCommand,
-} from "@aws-sdk/client-cloudtrail"
+  GetQueryResultsCommand,
+} from "@aws-sdk/client-cloudwatch-logs"
 
 const { Sha256 } = crypto;
 const REGION = process.env.REGION;
-const EventDataStore = (process.env.EVENT_DATA_STORE).split("/").pop();
+const CW_LOG_GROUP_NAME = process.env.CW_LOG_GROUP_NAME;
 const GRAPHQL_ENDPOINT = process.env.API_TEAM_GRAPHQLAPIENDPOINTOUTPUT;
 
-// const {
-//   CloudTrailClient,
-//   StartQueryCommand,
-//   DescribeQueryCommand,
-// } = require("@aws-sdk/client-cloudtrail");
-
-const client = new CloudTrailClient({ region: REGION });
+const client = new CloudWatchLogsClient({ region: REGION });
 
 const query = /* GraphQL */ `
   mutation UpdateSessions(
@@ -120,32 +114,42 @@ const updateItem = async (id, queryId) => {
 
 
 const get_query_status = async (queryId) => {
-  try {
-    const input = {
-      EventDataStore: EventDataStore,
-      QueryId: queryId,
-    };
-    const command = new DescribeQueryCommand(input);
-    const response = await client.send(command);
-    return response.QueryStatus;
-  } catch (err) {
-    console.log("Error", err);
-  }
+  const input = {
+    queryId: queryId,
+  };
+  const command = new GetQueryResultsCommand(input);
+  const response = await client.send(command);
+  return response.status;
+};
+
+export const buildQueryString = (startTime, endTime, username, role, accountId) => {
+  return `fields eventID, eventName, eventSource, eventTime
+| filter eventTime > "${startTime}" and eventTime < "${endTime}"
+| filter userIdentity.principalId like /(?i):${username}/
+| filter userIdentity.sessionContext.sessionIssuer.arn like /${role}/
+| filter recipientAccountId = "${accountId}"
+| sort eventTime asc`;
 };
 
 const start_query = async (event) => {
   const startTime = event["startTime"]["S"];
   const endTime = event["endTime"]["S"];
-  const  username = event["username"]["S"].replace('idc_', '');
+  const username = event["username"]["S"].replace('idc_', '');
   const accountId = event["accountId"]["S"];
   const role = event["role"]["S"];
   try {
+    const startEpoch = Math.floor(new Date(startTime).getTime() / 1000);
+    const endEpoch = Math.floor(new Date(endTime).getTime() / 1000);
+    const queryString = buildQueryString(startTime, endTime, username, role, accountId);
     const input = {
-      QueryStatement: `SELECT eventID, eventName, eventSource, eventTime FROM ${EventDataStore} WHERE eventTime > '${startTime}' AND eventTime < '${endTime}' AND lower(useridentity.principalId) LIKE '%:${username}%' AND useridentity.sessionContext.sessionIssuer.arn LIKE '%${role}%' AND recipientAccountId='${accountId}'`,
+      logGroupName: CW_LOG_GROUP_NAME,
+      startTime: startEpoch,
+      endTime: endEpoch,
+      queryString: queryString,
     };
     const command = new StartQueryCommand(input);
     const response = await client.send(command);
-    return response.QueryId;
+    return response.queryId;
   } catch (err) {
     console.log("Error", err);
   }
@@ -156,15 +160,33 @@ export const handler = async (event) => {
   data = data["dynamodb"]["NewImage"]
   const id = data["id"]["S"]
   console.log("Event", data);
-  const queryId = await start_query(data);
-  let status = await get_query_status(queryId);
-  while (status) {
-    console.log(status);
-    status = await get_query_status(queryId);
-    if (status === "FINISHED") {
-      console.log("query Finished - queryId:", queryId );
-      const response = await updateItem (id, queryId);
-      return response;
+
+  try {
+    const queryId = await start_query(data);
+    let status = 'Running';
+
+    while (status === 'Running' || status === 'Scheduled') {
+      const currentStatus = await get_query_status(queryId);
+      status = currentStatus;
+      console.log("Query status:", status);
+
+      if (status === 'Complete') {
+        console.log("query Complete - queryId:", queryId);
+        const response = await updateItem(id, queryId);
+        return response;
+      }
+
+      if (status === 'Failed' || status === 'Cancelled' || status === 'Timeout') {
+        throw new Error(`Query failed with status: ${status}`);
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
+  } catch (err) {
+    if (err.name === 'ResourceNotFoundException') {
+      console.log(`ResourceNotFoundException: Log group '${CW_LOG_GROUP_NAME}' not found.`, err);
+      return;
+    }
+    throw err;
   }
 };

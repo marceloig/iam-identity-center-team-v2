@@ -4,7 +4,7 @@ export ORG_MASTER_PROFILE=org_master_profile
 export TEAM_ADMIN_GROUP="team_admin_group_name"
 export TEAM_AUDITOR_GROUP="team_auditor_group_name"
 export TAGS="project=iam-identity-center-team environment=prod"
-export CLOUDTRAIL_AUDIT_LOGS=arn:aws:cloudtrail:us-east-1:123456789101:eventdatastore/xxxxxxx-xxxx-xxxx-xxx-xxxxxxxx
+export CW_LOG_GROUP_NAME="aws-cloudtrail-logs"
 export SECRET_NAME=TEAM-IDC-APP
 export USER_POOL_ID="us-east-1_xxxxxx"
 export SETTINGS_TABLE_NAME="team-idc-settings-table"
